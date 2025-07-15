@@ -23,7 +23,7 @@ Add this into your system configuration or modify it accordingly
 
 {...}: {
   inputs = {
-    roll-cli.url = "github:kurk070ff/roll-cli";
+    roll-cli.url = "github:pine-free/roll-cli";
   };
   outputs = { ... }@inputs: {
      # <snip>
