@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
+use cli::CliArgs;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_while},
@@ -10,6 +11,8 @@ use nom::{
     AsChar, IResult,
 };
 use rand::Rng;
+
+mod cli;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Dice {
@@ -66,18 +69,11 @@ fn dice_expression(input: &str) -> IResult<&str, Vec<Token>> {
     Ok((input, dice_res))
 }
 
-#[derive(Parser)]
-struct App {
-    pub expression: String,
-    #[arg(short, long = "show-sum")]
-    pub show_sum: bool,
-}
-
 fn main() -> Result<()> {
-    let App {
+    let CliArgs {
         expression,
         show_sum,
-    } = App::parse();
+    } = CliArgs::parse();
 
     let (_, dice_vec) = dice_expression(&expression)
         .map_err(|_| anyhow::format_err!("Failed to parse expression"))?;
