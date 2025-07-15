@@ -1,6 +1,6 @@
 use nom::{
     branch::alt,
-    bytes::complete::tag,
+    bytes::complete::{tag, take_until},
     character::complete::{digit1, multispace0},
     combinator::{map, map_res, recognize},
     multi::separated_list1,
@@ -8,43 +8,47 @@ use nom::{
     IResult, Parser,
 };
 
-use crate::dice::{Dice, RollExpression};
+use crate::dice::{Calculation, Dice, RollExpression};
 
-pub enum Token {
+pub enum CalculationAtom {
     Die(Dice),
     Num(u32),
 }
 
-fn number(i: &str) -> IResult<&str, Token> {
+fn number(i: &str) -> IResult<&str, CalculationAtom> {
     map_res(digit1, |digit_str: &str| {
-        digit_str.parse::<u32>().map(Token::Num)
+        digit_str.parse::<u32>().map(CalculationAtom::Num)
     })
     .parse(i)
 }
 
-fn die(i: &str) -> IResult<&str, Token> {
+fn die(i: &str) -> IResult<&str, CalculationAtom> {
     map_res(
         recognize(separated_pair(digit1, tag("d"), digit1)),
-        |d_str: &str| d_str.parse::<Dice>().map(Token::Die),
+        |d_str: &str| d_str.parse::<Dice>().map(CalculationAtom::Die),
     )
     .parse(i)
 }
 
-fn token(i: &str) -> IResult<&str, Token> {
+fn calculation_atom(i: &str) -> IResult<&str, CalculationAtom> {
     alt((die, number)).parse(i)
 }
 
-pub fn dice_expression(i: &str) -> IResult<&str, RollExpression> {
+fn description(i: &str) -> IResult<&str, &str> {
+    take_until(":").parse(i)
+}
+
+fn calculation(i: &str) -> IResult<&str, Calculation> {
     map(
         separated_list1(
             preceded(multispace0, tag("+")),
-            preceded(multispace0, token),
+            preceded(multispace0, calculation_atom),
         ),
         |tokens| {
             let dice = tokens
                 .iter()
                 .filter_map(|tok| match tok {
-                    Token::Die(die) => Some(die),
+                    CalculationAtom::Die(die) => Some(die),
                     _ => None,
                 })
                 .cloned()
@@ -53,14 +57,30 @@ pub fn dice_expression(i: &str) -> IResult<&str, RollExpression> {
             let numbers = tokens
                 .iter()
                 .filter_map(|tok| match tok {
-                    Token::Num(num) => Some(num),
+                    CalculationAtom::Num(num) => Some(num),
                     _ => None,
                 })
                 .cloned()
                 .collect::<Vec<_>>();
 
-            RollExpression::new(&dice, &numbers)
+            Calculation::new(&dice, &numbers)
         },
     )
     .parse(i)
+}
+
+fn named_expression(i: &str) -> IResult<&str, RollExpression> {
+    map(
+        separated_pair(description, tag(":"), calculation),
+        |(desc, calc)| RollExpression::new(&desc, &calc),
+    )
+    .parse(i)
+}
+
+fn nameless_expression(i: &str) -> IResult<&str, RollExpression> {
+    map(calculation, |calc| RollExpression::nameless(&calc)).parse(i)
+}
+
+pub fn roll_expression(i: &str) -> IResult<&str, RollExpression> {
+    alt((named_expression, nameless_expression)).parse(i)
 }

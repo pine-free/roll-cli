@@ -6,8 +6,8 @@ use nom::Finish;
 
 use crate::{
     cli::CliArgs,
-    dice::{RollExpression, RollResults},
-    expressions::dice_expression,
+    dice::{Calculation, RollExpression, RollResults},
+    expressions::roll_expression,
 };
 
 pub struct App {
@@ -24,15 +24,15 @@ impl App {
     fn parse_expression(&self) -> Result<RollExpression> {
         let expr: Arc<String> = Arc::new(self.args.expression.clone());
         let r = expr.as_ref();
-        let (_, dice_expr) = dice_expression(r)
+        let (_, dice_expr) = roll_expression(r)
             .finish()
             .map_err(|err| anyhow!("parser error: {}", err.to_string()))?;
         Ok(dice_expr)
     }
 
     fn make_rolls(&self, expression: &RollExpression) -> Vec<RollResults> {
-        dbg!(&expression);
         expression
+            .calculation
             .dice
             .iter()
             .map(RollResults::from)
@@ -52,6 +52,12 @@ impl App {
         }
     }
 
+    fn print_roll_expr(&self, expression: &RollExpression) {
+        let name = expression.to_string();
+        let sum = expression.calculation.roll();
+        println!("{}: {}", name, sum);
+    }
+
     fn print_sum(&self, rolls: &[RollResults], numbers: &[u32]) {
         let rolls_sum = rolls
             .iter()
@@ -64,12 +70,13 @@ impl App {
 
     pub fn run(&self) -> Result<()> {
         let expression = self.parse_expression()?;
-        let rolls = self.make_rolls(&expression);
-        self.print_rolls(&rolls);
+        self.print_roll_expr(&expression);
+        // let rolls = self.make_rolls(&expression);
+        // self.print_rolls(&rolls);
 
-        if self.args.show_sum {
-            self.print_sum(&rolls, &expression.numbers);
-        }
+        // if self.args.show_sum {
+        //     self.print_sum(&rolls, &expression.numbers);
+        // }
 
         Ok(())
     }
