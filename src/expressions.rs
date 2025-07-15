@@ -81,6 +81,14 @@ fn nameless_expression(i: &str) -> IResult<&str, RollExpression> {
     map(calculation, |calc| RollExpression::nameless(&calc)).parse(i)
 }
 
-pub fn roll_expression(i: &str) -> IResult<&str, RollExpression> {
-    alt((named_expression, nameless_expression)).parse(i)
+fn roll_expression(i: &str) -> IResult<&str, RollExpression> {
+    alt((nameless_expression, named_expression)).parse(i)
+}
+
+pub fn roll_expressions_list(i: &str) -> IResult<&str, Vec<RollExpression>> {
+    separated_list1(
+        preceded(multispace0, tag(";")),
+        preceded(multispace0, roll_expression),
+    )
+    .parse(i)
 }
