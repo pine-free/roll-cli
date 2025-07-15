@@ -4,6 +4,7 @@ use cli::CliArgs;
 use dice::Dice;
 use expressions::{dice_expression, Token};
 
+mod app;
 mod cli;
 mod dice;
 mod expressions;
