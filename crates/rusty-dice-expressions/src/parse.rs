@@ -25,12 +25,94 @@ pub enum Atom {
     Operation(Operation),
 }
 
+impl Into<Atom> for i32 {
+    fn into(self) -> Atom {
+        Atom::Number(self)
+    }
+}
+
+impl Into<Atom> for Dice {
+    fn into(self) -> Atom {
+        Atom::Dice(self)
+    }
+}
+
+impl Into<Atom> for Operation {
+    fn into(self) -> Atom {
+        Atom::Operation(self)
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Expr {
     Constant(Atom),
     Application(Box<Expr>, (Box<Expr>, Box<Expr>)),
-    Label(String, Box<Expr>),
-    Separated(Vec<Expr>),
+    // Label(String, Box<Expr>),
+    // Separated(Vec<Expr>),
+}
+
+impl Expr {
+    pub fn number(num: i32) -> Self {
+        Self::Constant(Atom::Number(num))
+    }
+
+    pub fn dice(dice: Dice) -> Self {
+        Self::Constant(Atom::Dice(dice))
+    }
+
+    pub fn operation(op: Operation) -> Self {
+        Self::Constant(Atom::Operation(op))
+    }
+
+    pub fn application(op: Operation, left: impl Into<Atom>, right: impl Into<Atom>) -> Self {
+        Self::Application(
+            Box::new(Self::operation(op)),
+            (
+                Box::new(Self::Constant(left.into())),
+                Box::new(Self::Constant(right.into())),
+            ),
+        )
+    }
+
+    pub fn get_num(&self) -> Option<i32> {
+        match self {
+            Expr::Constant(Atom::Number(num)) => Some(*num),
+            _ => None,
+        }
+    }
+}
+
+impl Into<Expr> for Dice {
+    fn into(self) -> Expr {
+        Expr::Constant(self.into())
+    }
+}
+
+impl Into<Expr> for i32 {
+    fn into(self) -> Expr {
+        Expr::Constant(self.into())
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum ExprKind {
+    Simple(Expr),
+    Labeled(String, Expr),
+    Separated(Vec<ExprKind>),
+}
+
+impl ExprKind {
+    pub fn simple(val: impl Into<Expr>) -> Self {
+        Self::Simple(val.into())
+    }
+
+    pub fn labeled(label: &str, val: impl Into<Expr>) -> Self {
+        Self::Labeled(label.to_string(), val.into())
+    }
+
+    pub fn separated(exprs: &[ExprKind]) -> Self {
+        Self::Separated(exprs.into_iter().cloned().collect::<Vec<_>>())
+    }
 }
 
 fn parse_operation(i: &str) -> ParseRes<Atom> {
@@ -76,46 +158,55 @@ fn parse_constant(i: &str) -> ParseRes<Expr> {
 fn parse_application(i: &str) -> ParseRes<Expr> {
     map(
         (
-            parse_expr,
+            preceded(multispace0, parse_atom),
             preceded(multispace0, parse_operation),
             parse_expr,
         ),
         |(left, op, right)| {
             Expr::Application(
                 Box::new(Expr::Constant(op)),
-                (Box::new(left), Box::new(right)),
+                (Box::new(Expr::Constant(left)), Box::new(right)),
             )
         },
     )
     .parse(i)
 }
 
-fn parse_label(i: &str) -> ParseRes<Expr> {
-    map(
-        separated_pair(take_until(":"), tag(":"), parse_expr),
-        |(label, expr)| Expr::Label(label.to_string(), Box::new(expr)),
-    )
-    .parse(i)
-}
-
-fn parse_separated(i: &str) -> ParseRes<Expr> {
-    map(separated_list1(tag(";"), parse_expr), |exprs| {
-        Expr::Separated(exprs)
-    })
-    .parse(i)
-}
-
-pub fn parse_expr(i: &str) -> ParseRes<Expr> {
+fn parse_expr(i: &str) -> ParseRes<Expr> {
     preceded(
         multispace0,
         alt((
-            parse_constant,
+            // parse_separated,
             parse_application,
-            parse_separated,
-            parse_label,
+            parse_constant,
+            // parse_label,
         )),
     )
     .parse(i)
+}
+
+fn parse_simple(i: &str) -> ParseRes<ExprKind> {
+    map(parse_expr, ExprKind::Simple).parse(i)
+}
+
+fn parse_labeled(i: &str) -> ParseRes<ExprKind> {
+    map(
+        separated_pair(preceded(multispace0, take_until(":")), tag(":"), parse_expr),
+        |(label, expr)| ExprKind::Labeled(label.to_string(), expr),
+    )
+    .parse(i)
+}
+
+fn parse_separated(i: &str) -> ParseRes<ExprKind> {
+    map(
+        separated_list1(preceded(multispace0, tag(";")), parse_expr_kind),
+        |exprs| ExprKind::Separated(exprs),
+    )
+    .parse(i)
+}
+
+pub fn parse_expr_kind(i: &str) -> ParseRes<ExprKind> {
+    alt((parse_simple, parse_labeled, parse_separated)).parse(i)
 }
 
 #[cfg(test)]
@@ -133,7 +224,7 @@ mod tests {
     fn test_parse_die() {
         let die = "12d20";
         let (_, die) = parse_dice(die).unwrap();
-        assert_eq!(die, Atom::Dice(Dice::new(12, 20)));
+        assert_eq!(die, Dice::new(12, 20).into());
     }
 
     #[test]
@@ -147,48 +238,37 @@ mod tests {
     fn test_parse_constant() {
         let con = "2d6";
         let (_, con) = parse_constant(con).unwrap();
-        assert_eq!(con, Expr::Constant(Atom::Dice(Dice::new(2, 6))))
+        assert_eq!(con, Dice::new(2, 6).into());
     }
 
     #[test]
     fn test_parse_application() {
         let app = "2d6 + 5";
         let (_, app) = parse_application(app).unwrap();
-        assert_eq!(
-            app,
-            Expr::Application(
-                Box::new(Expr::Constant(Atom::Operation(Operation::Add))),
-                (
-                    Box::new(Expr::Constant(Atom::Dice(Dice::new(2, 6)))),
-                    Box::new(Expr::Constant(Atom::Number(5)))
-                )
-            )
-        )
+        assert_eq!(app, Expr::application(Operation::Add, Dice::new(2, 6), 5))
     }
 
     #[test]
     fn test_parse_label() {
         let label = "yay dice: 1d4";
-        let (_, label) = parse_label(label).unwrap();
+        let (_, label) = parse_labeled(label).unwrap();
         assert_eq!(
             label,
-            Expr::Label(
-                "yay dice".to_string(),
-                Box::new(Expr::Constant(Atom::Dice(Dice::new(1, 4))))
-            )
+            ExprKind::Labeled("yay dice".to_string(), Dice::new(1, 4).into())
         )
     }
 
     #[test]
     fn test_parse_separated() {
-        let sep = "1d6; -2; 1d4";
-        let (_, sep) = parse_separated(sep).unwrap();
+        let sep = "1d6 + 3; -2; my roll: 1d4";
+        let (i, sep) = parse_separated(sep).unwrap();
+        assert_eq!(i, "");
         assert_eq!(
             sep,
-            Expr::Separated(vec![
-                Expr::Constant(Atom::Dice(Dice::new(1, 6))),
-                Expr::Constant(Atom::Number(-2)),
-                Expr::Constant(Atom::Dice(Dice::new(1, 4))),
+            ExprKind::separated(&[
+                ExprKind::simple(Expr::application(Operation::Add, Dice::new(1, 6), 3)),
+                ExprKind::simple(-2),
+                ExprKind::labeled("my roll", Dice::new(1, 4))
             ])
         )
     }
