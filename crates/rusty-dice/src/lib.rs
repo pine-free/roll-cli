@@ -14,6 +14,17 @@ impl Dice {
             .map(|_| rand::rng().random_range(1..=self.num_sides))
             .collect()
     }
+
+    pub fn new(num_sides: u32, quantity: u32) -> Self {
+        Self {
+            num_sides,
+            quantity,
+        }
+    }
+
+    pub fn single(num_sides: u32) -> Self {
+        Self::new(num_sides, 1)
+    }
 }
 
 impl FromStr for Dice {
@@ -43,10 +54,6 @@ impl ToString for Dice {
         format!("{}d{}", self.quantity, self.num_sides)
     }
 }
-
-// pub fn add(left: u64, right: u64) -> u64 {
-//     left + right
-// }
 
 // #[cfg(test)]
 // mod tests {
