@@ -6,7 +6,7 @@ use nom::{
     combinator::{map, map_res, recognize},
     error::Error,
     multi::separated_list1,
-    sequence::{delimited, preceded, separated_pair},
+    sequence::{preceded, separated_pair},
 };
 use rusty_dice::Dice;
 

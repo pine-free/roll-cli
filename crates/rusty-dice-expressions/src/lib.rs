@@ -38,7 +38,7 @@ impl Calculation {
 
     /// Does not give info on what values were produced, just gives the sum
     pub fn roll(&self) -> u32 {
-        let vals = self.dice.iter().map(Dice::roll).flatten().sum::<u32>();
+        let vals = self.dice.iter().flat_map(Dice::roll).sum::<u32>();
         let nums_total = self.numbers.iter().sum::<u32>();
 
         vals + nums_total
@@ -64,7 +64,7 @@ impl ToString for Calculation {
         if nums_str.is_empty() {
             dice_str
         } else {
-            format!("{} + {}", dice_str, nums_str)
+            format!("{dice_str} + {nums_str}")
         }
     }
 }
@@ -184,7 +184,7 @@ fn calculation(i: &str) -> IResult<&str, Calculation> {
 fn named_expression(i: &str) -> IResult<&str, RollExpression> {
     map(
         separated_pair(description, tag(":"), calculation),
-        |(desc, calc)| RollExpression::new(&desc, &calc),
+        |(desc, calc)| RollExpression::new(desc, &calc),
     )
     .parse(i)
 }

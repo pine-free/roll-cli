@@ -40,7 +40,7 @@ pub fn eval_expr(e: Expr) -> Option<Expr> {
 pub fn eval_from_str(src: &str) -> Result<Expr, ExpressionError> {
     parse_expr(src)
         .map_err(|e| ExpressionError::ParseError(e.to_string()))
-        .and_then(|(_, exp)| eval_expr(exp).ok_or_else(|| ExpressionError::EvaluationError))
+        .and_then(|(_, exp)| eval_expr(exp).ok_or(ExpressionError::EvaluationError))
 }
 
 #[cfg(test)]
