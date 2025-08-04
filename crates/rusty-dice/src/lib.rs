@@ -55,13 +55,14 @@ impl ToString for Dice {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     #[test]
-//     fn it_works() {
-//         let result = add(2, 2);
-//         assert_eq!(result, 4);
-//     }
-// }
+    #[test]
+    fn to_string() {
+        let d6 = Dice::single(6);
+        let repr = d6.to_string();
+        assert_eq!(repr.as_str(), "1d6");
+    }
+}
