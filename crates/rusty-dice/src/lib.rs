@@ -20,6 +20,7 @@
 //! ```rust
 //! let many_dice: Dice = "5d10".parse();
 //! ```
+#![deny(missing_docs)]
 
 use std::{fmt::Display, str::FromStr};
 
