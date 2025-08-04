@@ -38,6 +38,15 @@ pub enum Atom {
     Operation(Operation),
 }
 
+impl Atom {
+    pub fn operation(&self) -> Option<Operation> {
+        match self {
+            Atom::Operation(op) => Some(*op),
+            _ => None,
+        }
+    }
+}
+
 impl fmt::Display for Atom {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let inner = match self {
@@ -70,7 +79,7 @@ impl Into<Atom> for Operation {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Expr {
     Constant(Atom),
-    Application(Box<Expr>, (Box<Expr>, Box<Expr>)),
+    Application(Operation, (Box<Expr>, Box<Expr>)),
 }
 
 impl fmt::Display for Expr {
@@ -100,7 +109,7 @@ impl Expr {
 
     pub fn application(op: Operation, left: impl Into<Atom>, right: impl Into<Atom>) -> Self {
         Self::Application(
-            Box::new(Self::operation(op)),
+            op,
             (
                 Box::new(Self::Constant(left.into())),
                 Box::new(Self::Constant(right.into())),
@@ -215,7 +224,7 @@ fn parse_application(i: &str) -> ParseRes<Expr> {
         ),
         |(left, op, right)| {
             Expr::Application(
-                Box::new(Expr::Constant(op)),
+                op.operation().unwrap(),
                 (Box::new(Expr::Constant(left)), Box::new(right)),
             )
         },

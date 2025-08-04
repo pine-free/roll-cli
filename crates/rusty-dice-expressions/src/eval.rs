@@ -32,14 +32,9 @@ impl Eval for Expr {
                     .get_num()
                     .ok_or(ExpressionError::EvaluationError)?;
 
-                match *expr {
-                    Expr::Constant(Atom::Operation(Operation::Add)) => {
-                        Ok(Expr::Constant(Atom::Number(l + r)))
-                    }
-                    Expr::Constant(Atom::Operation(Operation::Sub)) => {
-                        Ok(Expr::Constant(Atom::Number(l - r)))
-                    }
-                    _ => Err(ExpressionError::EvaluationError),
+                match expr {
+                    Operation::Add => Ok(Expr::Constant(Atom::Number(l + r))),
+                    Operation::Sub => Ok(Expr::Constant(Atom::Number(l - r))),
                 }
             }
             Expr::Constant(_) => Ok(self),
