@@ -223,7 +223,7 @@ fn parse_application(i: &str) -> ParseRes<Expr> {
     .parse(i)
 }
 
-fn parse_expr(i: &str) -> ParseRes<Expr> {
+pub fn parse_expr(i: &str) -> ParseRes<Expr> {
     preceded(multispace0, alt((parse_application, parse_constant))).parse(i)
 }
 

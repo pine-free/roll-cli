@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use crate::{
     ExpressionError,
-    parse::{Atom, Expr, ExprKind, Operation, parse_expr_kind},
+    parse::{Atom, Expr, ExprKind, Operation, parse_expr, parse_expr_kind},
 };
 
 pub trait Eval {
@@ -88,6 +88,16 @@ impl FromStr for ExprKind {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         parse_expr_kind(s)
+            .map(|(_, exp)| exp)
+            .map_err(|e| ExpressionError::ParseError(e.to_string()))
+    }
+}
+
+impl FromStr for Expr {
+    type Err = ExpressionError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        parse_expr(s)
             .map(|(_, exp)| exp)
             .map_err(|e| ExpressionError::ParseError(e.to_string()))
     }
