@@ -65,4 +65,13 @@ mod tests {
         let repr = d6.to_string();
         assert_eq!(repr.as_str(), "1d6");
     }
+
+    #[test]
+    fn parse() {
+        let string = "4d8".to_string();
+        let die = string
+            .parse::<Dice>()
+            .expect("Expression should be parseable");
+        assert_eq!(die, Dice::new(8, 4));
+    }
 }
