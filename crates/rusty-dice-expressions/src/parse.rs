@@ -5,7 +5,7 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take_until},
     character::complete::{digit1, multispace0, one_of},
-    combinator::{map, map_res, recognize},
+    combinator::{map, map_res, not, recognize},
     error::Error,
     multi::separated_list1,
     sequence::{preceded, separated_pair},
@@ -248,16 +248,20 @@ fn parse_labeled(i: &str) -> ParseRes<ExprKind> {
     .parse(i)
 }
 
+fn parse_expr_kind_unit(i: &str) -> ParseRes<ExprKind> {
+    alt((parse_simple, parse_labeled)).parse(i)
+}
+
 fn parse_separated(i: &str) -> ParseRes<ExprKind> {
     map(
-        separated_list1(preceded(multispace0, tag(";")), parse_expr_kind),
+        separated_list1(preceded(multispace0, tag(";")), parse_expr_kind_unit),
         |exprs| ExprKind::Separated(exprs),
     )
     .parse(i)
 }
 
 pub fn parse_expr_kind(i: &str) -> ParseRes<ExprKind> {
-    alt((parse_simple, parse_labeled, parse_separated)).parse(i)
+    alt((parse_separated, parse_expr_kind_unit)).parse(i)
 }
 
 #[cfg(test)]
