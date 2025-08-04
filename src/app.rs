@@ -4,8 +4,9 @@ use anyhow::{anyhow, Result};
 use clap::Parser;
 use nom::Finish;
 
-use crate::dice::{RollExpression, RollResults};
-use crate::{cli::CliArgs, expressions::roll_expressions_list};
+use crate::cli::CliArgs;
+use rusty_dice_expressions::roll_expressions_list;
+use rusty_dice_expressions::{RollExpression, RollResults};
 
 pub struct App {
     args: CliArgs,
@@ -21,10 +22,11 @@ impl App {
     fn parse_expression(&self) -> Result<Vec<RollExpression>> {
         let expr: Arc<String> = Arc::new(self.args.expression.clone());
         let r = expr.as_ref();
-        let (_, dice_exprs) = roll_expressions_list(r)
-            .finish()
-            .map_err(|err| anyhow!("parser error: {}", err.to_string()))?;
-        Ok(dice_exprs)
+        todo!();
+        // let (_, dice_exprs) = roll_expressions_list(r)
+        //     .finish()
+        //     .map_err(|err| anyhow!("parser error: {}", err.to_string()))?;
+        // Ok(dice_exprs)
     }
 
     #[allow(dead_code)]
