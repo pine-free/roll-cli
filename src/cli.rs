@@ -1,8 +1,6 @@
 use clap::Parser;
 
-#[derive(Parser)]
+#[derive(Debug, Clone, Parser)]
 pub struct CliArgs {
     pub expression: String,
-    #[arg(short, long = "show-sum")]
-    pub show_sum: bool,
 }
