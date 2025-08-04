@@ -38,6 +38,17 @@ pub enum Atom {
     Operation(Operation),
 }
 
+impl fmt::Display for Atom {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let inner = match self {
+            Atom::Dice(dice) => dice.to_string(),
+            Atom::Number(n) => n.to_string(),
+            Atom::Operation(operation) => operation.to_string(),
+        };
+        write!(f, "{}", inner)
+    }
+}
+
 impl Into<Atom> for i32 {
     fn into(self) -> Atom {
         Atom::Number(self)
@@ -282,5 +293,11 @@ mod tests {
                 ExprKind::labeled("my roll", Dice::new(1, 4))
             ])
         )
+    }
+
+    #[test]
+    fn test_dice_repr() {
+        let atom: Atom = Dice::new(2, 10).into();
+        assert_eq!(format!("{}", atom), "2d10".to_string())
     }
 }
