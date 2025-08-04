@@ -73,6 +73,18 @@ pub enum Expr {
     Application(Box<Expr>, (Box<Expr>, Box<Expr>)),
 }
 
+impl fmt::Display for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let repr = match self {
+            Expr::Constant(atom) => atom.to_string(),
+            Expr::Application(expr, (l, r)) => {
+                format!("{} {} {}", l.to_string(), expr.to_string(), r.to_string())
+            }
+        };
+        write!(f, "{}", repr)
+    }
+}
+
 impl Expr {
     pub fn number(num: i32) -> Self {
         Self::Constant(Atom::Number(num))
@@ -299,5 +311,11 @@ mod tests {
     fn test_dice_repr() {
         let atom: Atom = Dice::new(2, 10).into();
         assert_eq!(format!("{}", atom), "2d10".to_string())
+    }
+
+    #[test]
+    fn test_expr_repr() {
+        let expr: Expr = Expr::application(Operation::Add, Dice::new(1, 6), 5);
+        assert_eq!(format!("{}", expr), "1d6 + 5");
     }
 }
