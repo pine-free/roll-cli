@@ -103,14 +103,14 @@ impl FromStr for Expr {
     }
 }
 
-pub fn eval_from_str(src: &str) -> Result<ExprKind, ExpressionError> {
-    let expr = src.parse::<ExprKind>()?;
-    expr.eval()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn eval_from_str(src: &str) -> Result<ExprKind, ExpressionError> {
+        let expr = src.parse::<ExprKind>()?;
+        expr.eval()
+    }
 
     #[test]
     fn test_dice_roll() {
