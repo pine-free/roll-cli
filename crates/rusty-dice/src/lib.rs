@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 use rand::Rng;
 use thiserror::Error;
@@ -47,7 +47,7 @@ impl FromStr for Dice {
         }
 
         let quantity = dice_parts
-            .get(0)
+            .first()
             .expect("There should always be the first element in the dice label")
             .parse::<u32>()
             .map_err(|_| to_err())?;
@@ -62,9 +62,9 @@ impl FromStr for Dice {
     }
 }
 
-impl ToString for Dice {
-    fn to_string(&self) -> String {
-        format!("{}d{}", self.quantity, self.num_sides)
+impl Display for Dice {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}d{}", self.quantity, self.num_sides)
     }
 }
 
