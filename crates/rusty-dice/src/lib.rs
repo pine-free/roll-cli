@@ -9,7 +9,7 @@ pub enum DiceError {
     InvalidExpression(String),
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Dice {
     pub quantity: u32,
     pub num_sides: u32,
