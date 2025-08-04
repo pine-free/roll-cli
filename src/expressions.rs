@@ -73,7 +73,7 @@ fn calculation(i: &str) -> IResult<&str, Calculation> {
 fn named_expression(i: &str) -> IResult<&str, RollExpression> {
     map(
         separated_pair(description, tag(":"), calculation),
-        |(desc, calc)| RollExpression::new(&desc, &calc),
+        |(desc, calc)| RollExpression::new(desc, &calc),
     )
     .parse(i)
 }

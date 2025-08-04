@@ -54,7 +54,7 @@ impl App {
     fn print_roll_expr(&self, expression: &RollExpression) {
         let name = expression.to_string();
         let sum = expression.calculation.roll();
-        println!("{}: {}", name, sum);
+        println!("{name}: {sum}");
     }
 
     #[allow(dead_code)]
@@ -65,13 +65,13 @@ impl App {
             .sum::<u32>();
         let nums_sum = numbers.iter().sum::<u32>();
         let total = rolls_sum + nums_sum;
-        println!("Sum: {}", total);
+        println!("Sum: {total}");
     }
 
     pub fn run(&self) -> Result<()> {
         let expressions = self.parse_expression()?;
         for expr in expressions.iter() {
-            self.print_roll_expr(&expr);
+            self.print_roll_expr(expr);
         }
         // let rolls = self.make_rolls(&expression);
         // self.print_rolls(&rolls);
