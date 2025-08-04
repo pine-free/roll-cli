@@ -4,8 +4,8 @@ use rand::Rng;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Dice {
-    pub num_sides: u32,
     pub quantity: u32,
+    pub num_sides: u32,
 }
 
 impl Dice {
@@ -15,7 +15,7 @@ impl Dice {
             .collect()
     }
 
-    pub fn new(num_sides: u32, quantity: u32) -> Self {
+    pub fn new(quantity: u32, num_sides: u32) -> Self {
         Self {
             num_sides,
             quantity,
@@ -23,7 +23,7 @@ impl Dice {
     }
 
     pub fn single(num_sides: u32) -> Self {
-        Self::new(num_sides, 1)
+        Self::new(1, num_sides)
     }
 }
 
@@ -72,6 +72,6 @@ mod tests {
         let die = string
             .parse::<Dice>()
             .expect("Expression should be parseable");
-        assert_eq!(die, Dice::new(8, 4));
+        assert_eq!(die, Dice::new(4, 8));
     }
 }
