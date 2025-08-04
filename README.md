@@ -5,11 +5,9 @@
 You can roll any dice you want in any numbers (within the unsigned integer limit,
 but if you need that many dice I think you've got bigger problems)
 ```console
-$ roll-cli "1d12"  # Regular die
-$ roll-cli "1d7"  # Not-so regular die
-$ roll-cli "3d8"  # Multiple dice
-$ roll-cli "4d6 + d4"  # Multiple dice of different types
-$ roll-cli "4d6 + d4 + 3" -r  # Counting the result ft. numbers 
+$ roll-cli "1d12"  # Regular dice roll
+$ roll-cli "4d6 + 1d4 + 3 - 1d8"  # Basic calculations 
+$ roll-cli "hp: 3d6; arrows in pouch: 4d4 + 6"  # Custom labels, several expressions in one
 ```
 
 ### Installation
