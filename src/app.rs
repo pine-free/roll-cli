@@ -14,7 +14,7 @@ fn format_expr(expr: &ExprKind) -> Result<String> {
         ExprKind::Labeled(l, expr) => format!("{l}: {}", expr.clone().eval()?),
         ExprKind::Separated(expr_kinds) => expr_kinds
             .iter()
-            .map(|e| format_expr(e))
+            .map(format_expr)
             .collect::<Result<Vec<_>, _>>()?
             .join("\n"),
     };
