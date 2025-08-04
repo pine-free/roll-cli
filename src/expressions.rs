@@ -8,7 +8,8 @@ use nom::{
     IResult, Parser,
 };
 
-use rusty_dice::{Calculation, Dice, RollExpression};
+use crate::dice::{Calculation, RollExpression};
+use rusty_dice::Dice;
 
 pub enum CalculationAtom {
     Die(Dice),

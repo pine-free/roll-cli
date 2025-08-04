@@ -4,8 +4,8 @@ use anyhow::{anyhow, Result};
 use clap::Parser;
 use nom::Finish;
 
+use crate::dice::{RollExpression, RollResults};
 use crate::{cli::CliArgs, expressions::roll_expressions_list};
-use rusty_dice::{RollExpression, RollResults};
 
 pub struct App {
     args: CliArgs,
