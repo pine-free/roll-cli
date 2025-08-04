@@ -1,3 +1,5 @@
+use core::fmt;
+
 use nom::{
     IResult, Parser,
     branch::alt,
@@ -16,6 +18,17 @@ type ParseRes<'a, T> = IResult<&'a str, T, Error<&'a str>>;
 pub enum Operation {
     Add,
     Sub,
+}
+
+impl fmt::Display for Operation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let repr = match self {
+            Operation::Add => "+",
+            Operation::Sub => "-",
+        };
+
+        write!(f, "{}", repr)
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -47,8 +60,6 @@ impl Into<Atom> for Operation {
 pub enum Expr {
     Constant(Atom),
     Application(Box<Expr>, (Box<Expr>, Box<Expr>)),
-    // Label(String, Box<Expr>),
-    // Separated(Vec<Expr>),
 }
 
 impl Expr {
