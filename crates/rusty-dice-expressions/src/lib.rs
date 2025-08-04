@@ -15,13 +15,13 @@
 //! let expression = "5d6 + 10";
 //!
 //! // Parse the string into an expression that you can work with
-//! let parsed = expression.parse::<ExprKind>()?;
+//! let parsed = expression.parse::<Expr>()?;
 //!
 //! // Evaluate the expression, rolling dice and performing calculations
 //! let evaluated = parsed.eval()?;
 //!
 //! // Get the result of the evaluation as a number
-//! let result = evaluated.get_num()?;
+//! let result = evaluated.get_num().unwrap();
 //! # Ok(())
 //! # }
 //! ```
@@ -38,7 +38,7 @@
 //! # fn main() -> Result<(), rusty_dice_expressions::ExpressionError> {
 //! let expression = "hp: 3d6; arrows in pouch: 2d10 + 20";
 //!
-//! let parsed = expression.parse::<ErrorKind>()?;
+//! let parsed = expression.parse::<ExprKind>()?;
 //! let evaluated = parsed.eval()?;
 //!
 //! # Ok(())
@@ -65,7 +65,7 @@ pub mod eval;
 pub mod parse;
 
 pub use eval::Eval;
-pub use parse::{Expr, parse_expr_kind};
+pub use parse::{Expr, ExprKind, parse_expr_kind};
 
 /// Errors that can happen when interacting with this crate
 #[derive(Debug, Error, PartialEq, Eq)]
