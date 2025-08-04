@@ -14,9 +14,17 @@ use rusty_dice::Dice;
 
 type ParseRes<'a, T> = IResult<&'a str, T, Error<&'a str>>;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+/// Mathematical operations supported by this crate
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Operation {
+    /// Addition
+    ///
+    /// Example: "1d6 + 3"
     Add,
+
+    /// Subtraction
+    ///
+    /// Example: "10 - 1d6"
     Sub,
 }
 
@@ -31,17 +39,48 @@ impl fmt::Display for Operation {
     }
 }
 
+/// Atoms of an expression
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Atom {
+    /// A dice notation
+    ///
+    /// Example: "2d6"
     Dice(Dice),
+
+    /// A number
+    ///
+    /// Examples: "42", "-13"
+    ///
+    /// Note that negative numbers are supported
     Number(i32),
+
+    /// A mathematical operation
+    ///
+    /// Example: "+"
     Operation(Operation),
 }
 
 impl Atom {
+    /// A helper function for extracting the operation if one is present in this atom
     pub fn operation(&self) -> Option<Operation> {
         match self {
             Atom::Operation(op) => Some(*op),
+            _ => None,
+        }
+    }
+
+    /// A helper function for extracting the dice value if one is present in this atom
+    pub fn dice(&self) -> Option<Dice> {
+        match self {
+            Atom::Dice(op) => Some(*op),
+            _ => None,
+        }
+    }
+
+    /// A helper function for extracting the number value if one is present in this atom
+    pub fn number(&self) -> Option<i32> {
+        match self {
+            Atom::Number(op) => Some(*op),
             _ => None,
         }
     }
@@ -76,9 +115,27 @@ impl Into<Atom> for Operation {
     }
 }
 
+/// A simple dice expression
+///
+/// Example: "5d10 + 4d6 + 10"
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Expr {
+    /// An expression consisting of a single atom
+    ///
+    /// Example: "1d6"
     Constant(Atom),
+
+    /// An expression consisting of an operation and two more expressions
+    /// as its operands
+    ///
+    /// Example: "5d6 + 10"
+    ///
+    /// Note that the operands can also be Application expressions
+    ///
+    /// Example: "5d6 + 1d4 + 5"
+    ///
+    /// The operands for the first addition are `5d6` and `1d4 + 5`,
+    /// which is itself an Application expr
     Application(Operation, (Box<Expr>, Box<Expr>)),
 }
 
@@ -95,28 +152,10 @@ impl fmt::Display for Expr {
 }
 
 impl Expr {
-    pub fn number(num: i32) -> Self {
-        Self::Constant(Atom::Number(num))
-    }
-
-    pub fn dice(dice: Dice) -> Self {
-        Self::Constant(Atom::Dice(dice))
-    }
-
-    pub fn operation(op: Operation) -> Self {
-        Self::Constant(Atom::Operation(op))
-    }
-
-    pub fn application(op: Operation, left: impl Into<Atom>, right: impl Into<Atom>) -> Self {
-        Self::Application(
-            op,
-            (
-                Box::new(Self::Constant(left.into())),
-                Box::new(Self::Constant(right.into())),
-            ),
-        )
-    }
-
+    /// A method for obtaining the number from this expression
+    ///
+    /// Returns [`None`] if the expression is not evaluated,
+    /// otherwise returns the underlying number
     pub fn get_num(&self) -> Option<i32> {
         match self {
             Expr::Constant(Atom::Number(num)) => Some(*num),
@@ -137,26 +176,29 @@ impl Into<Expr> for i32 {
     }
 }
 
+/// Advanced expression kinds
+///
+/// Allows for parsing of labeled and separated expressions
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ExprKind {
+    /// A simple expression
+    ///
+    /// Contains a basic [`Expr`],
     Simple(Expr),
+
+    /// A labeled expression
+    ///
+    /// Has a text label that allows to provide additional context
+    /// for the expression
     Labeled(String, Expr),
+
+    /// A separated expression
+    ///
+    /// Contains several expressions separated by ";"
     Separated(Vec<ExprKind>),
 }
 
-impl ExprKind {
-    pub fn simple(val: impl Into<Expr>) -> Self {
-        Self::Simple(val.into())
-    }
-
-    pub fn labeled(label: &str, val: impl Into<Expr>) -> Self {
-        Self::Labeled(label.to_string(), val.into())
-    }
-
-    pub fn separated(exprs: &[ExprKind]) -> Self {
-        Self::Separated(exprs.into_iter().cloned().collect::<Vec<_>>())
-    }
-}
+impl ExprKind {}
 
 impl fmt::Display for ExprKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -232,7 +274,7 @@ fn parse_application(i: &str) -> ParseRes<Expr> {
     .parse(i)
 }
 
-pub fn parse_expr(i: &str) -> ParseRes<Expr> {
+pub(crate) fn parse_expr(i: &str) -> ParseRes<Expr> {
     preceded(multispace0, alt((parse_application, parse_constant))).parse(i)
 }
 
@@ -260,13 +302,35 @@ fn parse_separated(i: &str) -> ParseRes<ExprKind> {
     .parse(i)
 }
 
-pub fn parse_expr_kind(i: &str) -> ParseRes<ExprKind> {
+pub(crate) fn parse_expr_kind(i: &str) -> ParseRes<ExprKind> {
     alt((parse_separated, parse_expr_kind_unit)).parse(i)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn application(op: Operation, left: impl Into<Atom>, right: impl Into<Atom>) -> Expr {
+        Expr::Application(
+            op,
+            (
+                Box::new(Expr::Constant(left.into())),
+                Box::new(Expr::Constant(right.into())),
+            ),
+        )
+    }
+
+    fn simple_expr_kind(val: impl Into<Expr>) -> ExprKind {
+        ExprKind::Simple(val.into())
+    }
+
+    fn labeled_expr_kind(label: &str, val: impl Into<Expr>) -> ExprKind {
+        ExprKind::Labeled(label.to_string(), val.into())
+    }
+
+    fn separated_expr_kind(exprs: &[ExprKind]) -> ExprKind {
+        ExprKind::Separated(exprs.into_iter().cloned().collect::<Vec<_>>())
+    }
 
     #[test]
     fn test_parse_op() {
@@ -300,7 +364,7 @@ mod tests {
     fn test_parse_application() {
         let app = "2d6 + 5";
         let (_, app) = parse_application(app).unwrap();
-        assert_eq!(app, Expr::application(Operation::Add, Dice::new(2, 6), 5))
+        assert_eq!(app, application(Operation::Add, Dice::new(2, 6), 5))
     }
 
     #[test]
@@ -320,10 +384,10 @@ mod tests {
         assert_eq!(i, "");
         assert_eq!(
             sep,
-            ExprKind::separated(&[
-                ExprKind::simple(Expr::application(Operation::Add, Dice::new(1, 6), 3)),
-                ExprKind::simple(-2),
-                ExprKind::labeled("my roll", Dice::new(1, 4))
+            separated_expr_kind(&[
+                simple_expr_kind(application(Operation::Add, Dice::new(1, 6), 3)),
+                simple_expr_kind(-2),
+                labeled_expr_kind("my roll", Dice::new(1, 4))
             ])
         )
     }
@@ -336,7 +400,7 @@ mod tests {
 
     #[test]
     fn test_expr_repr() {
-        let expr: Expr = Expr::application(Operation::Add, Dice::new(1, 6), 5);
+        let expr: Expr = application(Operation::Add, Dice::new(1, 6), 5);
         assert_eq!(format!("{}", expr), "1d6 + 5");
     }
 }

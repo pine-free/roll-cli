@@ -5,11 +5,23 @@ use crate::{
     parse::{Atom, Expr, ExprKind, Operation, parse_expr, parse_expr_kind},
 };
 
+/// Trait for objects that support evaluation
+///
+/// Evaluation means performing all the rolls in the expression and reducing
+/// it down to its numerical value
 pub trait Eval {
+    /// Perform the evaluation
+    ///
+    /// Returns a new instance of the evaluated type,
+    /// with all inner calculations reduced as much as possible
     fn eval(self) -> Result<Self, ExpressionError>
     where
         Self: Sized;
 
+    /// A function that allows to check if an evaluation has been complete
+    ///
+    /// Generally speaking, a "complete" evaluation means that all underlying values
+    /// of the expression are just numbers
     fn eval_complete(&self) -> bool;
 }
 

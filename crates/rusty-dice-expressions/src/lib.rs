@@ -65,7 +65,7 @@ pub mod eval;
 pub mod parse;
 
 pub use eval::Eval;
-pub use parse::{Expr, ExprKind, parse_expr_kind};
+pub use parse::{Expr, ExprKind};
 
 /// Errors that can happen when interacting with this crate
 #[derive(Debug, Error, PartialEq, Eq)]
