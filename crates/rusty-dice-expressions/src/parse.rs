@@ -149,6 +149,23 @@ impl ExprKind {
     }
 }
 
+impl fmt::Display for ExprKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let repr = match self {
+            ExprKind::Simple(expr) => expr.to_string(),
+            ExprKind::Labeled(l, expr) => format!("{l}: {expr}"),
+            ExprKind::Separated(expr_kinds) => {
+                let res = expr_kinds
+                    .into_iter()
+                    .map(|e| e.to_string())
+                    .collect::<Vec<_>>();
+                res.join(";").to_string()
+            }
+        };
+        write!(f, "{}", repr)
+    }
+}
+
 fn parse_operation(i: &str) -> ParseRes<Atom> {
     let (i, t) = one_of("+-")(i)?;
     Ok((
