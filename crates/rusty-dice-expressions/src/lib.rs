@@ -47,7 +47,7 @@
 //!
 //! Note that the [`ExprKind`] enum does not support the `get_num` method,
 //! as it can either have one or multiple results associated with it
-#![warn(missing_docs)]
+#![deny(missing_docs)]
 
 use thiserror::Error;
 
