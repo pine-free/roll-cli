@@ -224,16 +224,7 @@ fn parse_application(i: &str) -> ParseRes<Expr> {
 }
 
 fn parse_expr(i: &str) -> ParseRes<Expr> {
-    preceded(
-        multispace0,
-        alt((
-            // parse_separated,
-            parse_application,
-            parse_constant,
-            // parse_label,
-        )),
-    )
-    .parse(i)
+    preceded(multispace0, alt((parse_application, parse_constant))).parse(i)
 }
 
 fn parse_simple(i: &str) -> ParseRes<ExprKind> {
