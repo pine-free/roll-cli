@@ -1,10 +1,12 @@
+use std::str::FromStr;
+
 use crate::{
     ExpressionError,
     parse::{Atom, Expr, ExprKind, Operation, parse_expr_kind},
 };
 
 pub trait Eval {
-    fn eval(self) -> Option<Self>
+    fn eval(self) -> Result<Self, ExpressionError>
     where
         Self: Sized;
 
@@ -12,29 +14,35 @@ pub trait Eval {
 }
 
 impl Eval for Expr {
-    fn eval(self) -> Option<Self> {
+    fn eval(self) -> Result<Self, ExpressionError> {
         match self {
             // If the expression is a dice roll -- sum up the results
             Expr::Constant(Atom::Dice(die)) => {
                 let res: u32 = die.roll().iter().sum();
-                Some(Expr::Constant(Atom::Number(res as i32)))
+                Ok(Expr::Constant(Atom::Number(res as i32)))
             }
 
             Expr::Application(expr, (l, r)) => {
-                let l = l.eval().unwrap().get_num().unwrap();
-                let r = r.eval().unwrap().get_num().unwrap();
+                let l = l
+                    .eval()?
+                    .get_num()
+                    .ok_or(ExpressionError::EvaluationError)?;
+                let r = r
+                    .eval()?
+                    .get_num()
+                    .ok_or(ExpressionError::EvaluationError)?;
 
                 match *expr {
                     Expr::Constant(Atom::Operation(Operation::Add)) => {
-                        Some(Expr::Constant(Atom::Number(l + r)))
+                        Ok(Expr::Constant(Atom::Number(l + r)))
                     }
                     Expr::Constant(Atom::Operation(Operation::Sub)) => {
-                        Some(Expr::Constant(Atom::Number(l - r)))
+                        Ok(Expr::Constant(Atom::Number(l - r)))
                     }
-                    _ => None,
+                    _ => Err(ExpressionError::EvaluationError),
                 }
             }
-            Expr::Constant(_) => Some(self),
+            Expr::Constant(_) => Ok(self),
         }
     }
 
@@ -47,13 +55,13 @@ impl Eval for Expr {
 }
 
 impl Eval for ExprKind {
-    fn eval(self) -> Option<Self>
+    fn eval(self) -> Result<ExprKind, ExpressionError>
     where
         Self: Sized,
     {
         match self {
-            ExprKind::Simple(expr) => Some(ExprKind::Simple(expr.eval()?)),
-            ExprKind::Labeled(l, expr) => Some(ExprKind::Labeled(l, expr.eval()?)),
+            ExprKind::Simple(expr) => Ok(ExprKind::Simple(expr.eval()?)),
+            ExprKind::Labeled(l, expr) => Ok(ExprKind::Labeled(l, expr.eval()?)),
             ExprKind::Separated(expr_kinds) => {
                 let mut new_kinds = vec![];
                 for kind in expr_kinds {
@@ -61,7 +69,7 @@ impl Eval for ExprKind {
                     new_kinds.push(kind);
                 }
 
-                Some(ExprKind::Separated(new_kinds))
+                Ok(ExprKind::Separated(new_kinds))
             }
         }
     }
@@ -75,10 +83,19 @@ impl Eval for ExprKind {
     }
 }
 
+impl FromStr for ExprKind {
+    type Err = ExpressionError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        parse_expr_kind(s)
+            .map(|(_, exp)| exp)
+            .map_err(|e| ExpressionError::ParseError(e.to_string()))
+    }
+}
+
 pub fn eval_from_str(src: &str) -> Result<ExprKind, ExpressionError> {
-    parse_expr_kind(src)
-        .map_err(|e| ExpressionError::ParseError(e.to_string()))
-        .and_then(|(_, exp)| exp.eval().ok_or(ExpressionError::EvaluationError))
+    let expr = src.parse::<ExprKind>()?;
+    expr.eval()
 }
 
 #[cfg(test)]
