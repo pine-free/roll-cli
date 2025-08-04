@@ -4,12 +4,12 @@
 ### Usage
 You can roll any dice you want in any numbers (within the unsigned integer limit,
 but if you need that many dice I think you've got bigger problems)
-```
-$> roll-cli "d12" # Regular die
-$> roll-cli "d7" # Not-so regular die
-$> roll-cli "3d8" # Multiple dice
-$> roll-cli "4d6 + d4" # Multiple dice of different types
-$> roll-cli "4d6 + d4 + 3" -r # Counting the result ft. numbers 
+```console
+$ roll-cli "1d12"  # Regular die
+$ roll-cli "1d7"  # Not-so regular die
+$ roll-cli "3d8"  # Multiple dice
+$ roll-cli "4d6 + d4"  # Multiple dice of different types
+$ roll-cli "4d6 + d4 + 3" -r  # Counting the result ft. numbers 
 ```
 
 ### Installation
@@ -23,7 +23,7 @@ Add this into your system configuration or modify it accordingly
 
 {...}: {
   inputs = {
-    roll-cli.url = "github:kurk070ff/roll-cli";
+    roll-cli.url = "github:pine-free/roll-cli";
   };
   outputs = { ... }@inputs: {
      # <snip>
