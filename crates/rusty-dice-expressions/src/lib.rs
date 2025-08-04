@@ -9,6 +9,16 @@ use nom::{
     multi::separated_list1,
     sequence::{preceded, separated_pair},
 };
+use thiserror::Error;
+
+mod eval;
+mod parse;
+
+#[derive(Debug, Error, PartialEq, Eq)]
+pub enum ExpressionError {
+    #[error("failed to parse dice expression")]
+    ParseError(#[from] nom::error::Error<&'static str>),
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Calculation {
