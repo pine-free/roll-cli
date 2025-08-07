@@ -48,19 +48,21 @@ pub enum DiceError {
     InvalidExpression(String),
 }
 
+type DiceVal = u32;
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 /// The main type, representing one or more fair dice of the same type
 ///
 /// "Fair" means every value has an equal chance of appearing.
 pub struct Dice {
     /// The number of dice represented by this value
-    pub quantity: u32,
+    pub quantity: DiceVal,
 
     /// The number of sides every die has
     ///
     /// The number doesn't have to comply to actual real-world logic,
     /// so you can have however many sides you need
-    pub num_sides: u32,
+    pub num_sides: DiceVal,
 }
 
 impl Dice {
@@ -68,7 +70,7 @@ impl Dice {
     ///
     /// If the associated [`Dice`] value has a quantity of greater than 1,
     /// then the result will be a sum of the values
-    pub fn roll(&self) -> Vec<u32> {
+    pub fn roll(&self) -> Vec<DiceVal> {
         let mut results = (1..=self.quantity)
             .map(|_| rand::rng().random_range(1..=self.num_sides))
             .collect::<Vec<_>>();
@@ -77,7 +79,7 @@ impl Dice {
     }
 
     /// Basic constructor for a new dice value
-    pub fn new(quantity: u32, num_sides: u32) -> Self {
+    pub fn new(quantity: DiceVal, num_sides: DiceVal) -> Self {
         Self {
             num_sides,
             quantity,
@@ -85,7 +87,7 @@ impl Dice {
     }
 
     /// Convenience function to obtain a single die
-    pub fn single(num_sides: u32) -> Self {
+    pub fn single(num_sides: DiceVal) -> Self {
         Self::new(1, num_sides)
     }
 }
