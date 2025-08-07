@@ -51,6 +51,25 @@ pub enum DiceError {
 type DiceVal = u32;
 type RollResults = Vec<DiceVal>;
 
+/// Trait describing functions that can be used as modifiers
+/// for dice roll results
+///
+/// This trait is implemented for closures, and you can
+/// define your own modifiers by implementing it
+pub trait RollModifier {
+    /// The method that modifies the results
+    fn apply(self, results: RollResults) -> RollResults;
+}
+
+impl<F> RollModifier for F
+where
+    F: FnOnce(RollResults) -> RollResults,
+{
+    fn apply(self, results: RollResults) -> RollResults {
+        self(results)
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 /// The main type, representing one or more fair dice of the same type
 ///
@@ -84,12 +103,12 @@ impl DiceRoll {
         self.values.iter().sum()
     }
 
-    /// Apply a function to the roll. Produces a new roll
+    /// Apply a modifier to the roll. Produces a new roll
     pub fn and<F>(self, f: F) -> Self
     where
-        F: FnOnce(RollResults) -> RollResults,
+        F: RollModifier,
     {
-        let mut new_values = f(self.values);
+        let mut new_values = f.apply(self.values);
         new_values.sort();
 
         Self { values: new_values }
@@ -97,12 +116,12 @@ impl DiceRoll {
 
     /// Keep the n highest dice
     pub fn keep(self, n: usize) -> Self {
-        self.and(|res| res.into_iter().rev().take(n).rev().collect())
+        self.and(|res: RollResults| res.into_iter().rev().take(n).rev().collect())
     }
 
     /// Drop the n lowest dice
     pub fn drop(self, n: usize) -> Self {
-        self.and(|res| res.into_iter().skip(n).collect())
+        self.and(|res: RollResults| res.into_iter().skip(n).collect())
     }
 
     /// Check to see if the roll result is empty
