@@ -139,12 +139,12 @@ impl Dice {
     ///
     /// If the associated [`Dice`] value has a quantity of greater than 1,
     /// then the result will be a sum of the values
-    pub fn roll(&self) -> Vec<DiceVal> {
-        let mut results = (1..=self.quantity)
+    pub fn roll(&self) -> DiceRoll {
+        let results = (1..=self.quantity)
             .map(|_| rand::rng().random_range(1..=self.num_sides))
             .collect::<Vec<_>>();
-        results.sort();
-        results
+
+        DiceRoll::from(results)
     }
 
     /// Basic constructor for a new dice value
