@@ -39,13 +39,24 @@ impl fmt::Display for Operation {
     }
 }
 
+/// Modifiers that can be applied to dice, such as keeping or dropping
+/// a certain amount
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum DiceModifier {
+    /// Drops n lowest dice values
+    Drop(usize),
+
+    /// Keeps n highest dice values
+    Keep(usize),
+}
+
 /// Atoms of an expression
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Atom {
     /// A dice notation
     ///
     /// Example: "2d6"
-    Dice(Dice),
+    Dice(Dice, Option<Vec<DiceModifier>>),
 
     /// A number
     ///
@@ -72,7 +83,7 @@ impl Atom {
     /// A helper function for extracting the dice value if one is present in this atom
     pub fn dice(&self) -> Option<Dice> {
         match self {
-            Atom::Dice(op) => Some(*op),
+            Atom::Dice(op, _) => Some(*op),
             _ => None,
         }
     }
@@ -89,7 +100,7 @@ impl Atom {
 impl fmt::Display for Atom {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let inner = match self {
-            Atom::Dice(dice) => dice.to_string(),
+            Atom::Dice(dice, _) => dice.to_string(),
             Atom::Number(n) => n.to_string(),
             Atom::Operation(operation) => operation.to_string(),
         };
@@ -105,7 +116,7 @@ impl Into<Atom> for i32 {
 
 impl Into<Atom> for Dice {
     fn into(self) -> Atom {
-        Atom::Dice(self)
+        Atom::Dice(self, None)
     }
 }
 
@@ -232,7 +243,7 @@ fn parse_operation(i: &str) -> ParseRes<Atom> {
 fn parse_dice(i: &str) -> ParseRes<Atom> {
     map(
         recognize(separated_pair(digit1, tag("d"), digit1)),
-        |dice_str: &str| Atom::Dice(dice_str.parse::<Dice>().unwrap()),
+        |dice_str: &str| Atom::Dice(dice_str.parse::<Dice>().unwrap(), None),
     )
     .parse(i)
 }
