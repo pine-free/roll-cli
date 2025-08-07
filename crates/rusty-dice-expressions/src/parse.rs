@@ -49,6 +49,21 @@ pub enum RollModifier {
     Drop(usize),
 }
 
+impl rusty_dice::RollModifier for RollModifier {
+    fn apply(self, results: Vec<u32>) -> Vec<u32> {
+        match self {
+            RollModifier::Keep(n) => rusty_dice::DiceRoll::from(results).keep(n).into(),
+            RollModifier::Drop(n) => rusty_dice::DiceRoll::from(results).drop(n).into(),
+        }
+    }
+}
+
+impl rusty_dice::RollModifier for &RollModifier {
+    fn apply(self, results: Vec<u32>) -> Vec<u32> {
+        self.clone().apply(results)
+    }
+}
+
 impl fmt::Display for RollModifier {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let repr = match self {
@@ -66,7 +81,10 @@ pub enum Atom {
     ///
     /// Example: "2d6"
     Dice {
+        /// The dice representation itself
         dice: Dice,
+
+        /// Modifiers that may apply to the roll
         modifiers: Option<Vec<RollModifier>>,
     },
 

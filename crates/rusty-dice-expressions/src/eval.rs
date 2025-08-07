@@ -33,8 +33,19 @@ impl Eval for Expr {
                 dice: die,
                 modifiers,
             }) => {
-                let res: u32 = die.roll().sum();
-                todo!("add modifiers");
+                let mut roll = die.roll();
+
+                let res = if let Some(mods) = modifiers {
+                    for modif in mods.iter() {
+                        roll = roll.and(modif);
+                    }
+
+                    roll
+                } else {
+                    roll
+                }
+                .sum();
+
                 Ok(Expr::Constant(Atom::Number(res as i32)))
             }
 
