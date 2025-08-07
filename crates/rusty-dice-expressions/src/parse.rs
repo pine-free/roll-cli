@@ -40,8 +40,12 @@ impl fmt::Display for Operation {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// Roll modifier representations
 pub enum RollModifier {
+    /// Keep modifier
     Keep(usize),
+
+    /// Drop modifier
     Drop(usize),
 }
 
