@@ -30,7 +30,7 @@ impl Eval for Expr {
         match self {
             // If the expression is a dice roll -- sum up the results
             Expr::Constant(Atom::Dice(die)) => {
-                let res: u32 = die.roll().iter().sum();
+                let res: u32 = die.roll().sum();
                 Ok(Expr::Constant(Atom::Number(res as i32)))
             }
 
