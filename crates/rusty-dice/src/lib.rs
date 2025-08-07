@@ -69,9 +69,11 @@ impl Dice {
     /// If the associated [`Dice`] value has a quantity of greater than 1,
     /// then the result will be a sum of the values
     pub fn roll(&self) -> Vec<u32> {
-        (1..=self.quantity)
+        let mut results = (1..=self.quantity)
             .map(|_| rand::rng().random_range(1..=self.num_sides))
-            .collect()
+            .collect::<Vec<_>>();
+        results.sort();
+        results
     }
 
     /// Basic constructor for a new dice value
