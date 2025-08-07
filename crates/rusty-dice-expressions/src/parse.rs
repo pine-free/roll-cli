@@ -7,7 +7,7 @@ use nom::{
     character::complete::{digit1, multispace0, one_of},
     combinator::{map, map_res, recognize},
     error::Error,
-    multi::separated_list1,
+    multi::{many0, separated_list1},
     sequence::{preceded, separated_pair},
 };
 use rusty_dice::Dice;
@@ -285,12 +285,29 @@ fn parse_operation(i: &str) -> ParseRes<Atom> {
     ))
 }
 
+fn parse_dice_keep(i: &str) -> ParseRes<RollModifier> {
+    map(preceded(tag("k"), digit1), |keep_n: &str| {
+        RollModifier::Keep(keep_n.parse().unwrap())
+    })
+    .parse(i)
+}
+
+fn parse_dice_drop(i: &str) -> ParseRes<RollModifier> {
+    map(preceded(tag("d"), digit1), |keep_n: &str| {
+        RollModifier::Drop(keep_n.parse().unwrap())
+    })
+    .parse(i)
+}
+
 fn parse_dice(i: &str) -> ParseRes<Atom> {
     map(
-        recognize(separated_pair(digit1, tag("d"), digit1)),
-        |dice_str: &str| Atom::Dice {
+        (
+            recognize(separated_pair(digit1, tag("d"), digit1)),
+            many0(alt((parse_dice_keep, parse_dice_drop))),
+        ),
+        |(dice_str, mods)| Atom::Dice {
             dice: dice_str.parse::<Dice>().unwrap(),
-            modifiers: None,
+            modifiers: if mods.is_empty() { None } else { Some(mods) },
         },
     )
     .parse(i)
@@ -403,6 +420,32 @@ mod tests {
         let die = "12d20";
         let (_, die) = parse_dice(die).unwrap();
         assert_eq!(die, Dice::new(12, 20).into());
+    }
+
+    #[test]
+    fn test_parse_die_keep() {
+        let die = "2d6k1";
+        let (_, die) = parse_dice(die).unwrap();
+        assert_eq!(
+            die,
+            Atom::Dice {
+                dice: Dice::new(2, 6),
+                modifiers: Some(vec![RollModifier::Keep(1)])
+            }
+        )
+    }
+
+    #[test]
+    fn test_parse_die_drop() {
+        let die = "2d6d1";
+        let (_, die) = parse_dice(die).unwrap();
+        assert_eq!(
+            die,
+            Atom::Dice {
+                dice: Dice::new(2, 6),
+                modifiers: Some(vec![RollModifier::Drop(1)])
+            }
+        )
     }
 
     #[test]
