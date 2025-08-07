@@ -39,13 +39,32 @@ impl fmt::Display for Operation {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RollModifier {
+    Keep(usize),
+    Drop(usize),
+}
+
+impl fmt::Display for RollModifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let repr = match self {
+            RollModifier::Keep(n) => format!("k{n}"),
+            RollModifier::Drop(n) => format!("d{n}"),
+        };
+        write!(f, "{}", repr)
+    }
+}
+
 /// Atoms of an expression
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Atom {
     /// A dice notation
     ///
     /// Example: "2d6"
-    Dice(Dice),
+    Dice {
+        dice: Dice,
+        modifiers: Option<Vec<RollModifier>>,
+    },
 
     /// A number
     ///
@@ -72,7 +91,7 @@ impl Atom {
     /// A helper function for extracting the dice value if one is present in this atom
     pub fn dice(&self) -> Option<Dice> {
         match self {
-            Atom::Dice(op) => Some(*op),
+            Atom::Dice { dice: op, .. } => Some(*op),
             _ => None,
         }
     }
@@ -89,7 +108,19 @@ impl Atom {
 impl fmt::Display for Atom {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let inner = match self {
-            Atom::Dice(dice) => dice.to_string(),
+            Atom::Dice { dice, modifiers } => {
+                let repr = dice.to_string();
+                if let Some(mods) = modifiers {
+                    repr + mods
+                        .iter()
+                        .map(ToString::to_string)
+                        .collect::<Vec<_>>()
+                        .join("")
+                        .as_str()
+                } else {
+                    repr
+                }
+            }
             Atom::Number(n) => n.to_string(),
             Atom::Operation(operation) => operation.to_string(),
         };
@@ -105,7 +136,10 @@ impl Into<Atom> for i32 {
 
 impl Into<Atom> for Dice {
     fn into(self) -> Atom {
-        Atom::Dice(self)
+        Atom::Dice {
+            dice: self,
+            modifiers: None,
+        }
     }
 }
 
@@ -232,7 +266,10 @@ fn parse_operation(i: &str) -> ParseRes<Atom> {
 fn parse_dice(i: &str) -> ParseRes<Atom> {
     map(
         recognize(separated_pair(digit1, tag("d"), digit1)),
-        |dice_str: &str| Atom::Dice(dice_str.parse::<Dice>().unwrap()),
+        |dice_str: &str| Atom::Dice {
+            dice: dice_str.parse::<Dice>().unwrap(),
+            modifiers: None,
+        },
     )
     .parse(i)
 }

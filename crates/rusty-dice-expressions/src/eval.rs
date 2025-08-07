@@ -29,8 +29,12 @@ impl Eval for Expr {
     fn eval(self) -> Result<Self, ExpressionError> {
         match self {
             // If the expression is a dice roll -- sum up the results
-            Expr::Constant(Atom::Dice(die)) => {
+            Expr::Constant(Atom::Dice {
+                dice: die,
+                modifiers,
+            }) => {
                 let res: u32 = die.roll().sum();
+                todo!("add modifiers");
                 Ok(Expr::Constant(Atom::Number(res as i32)))
             }
 
