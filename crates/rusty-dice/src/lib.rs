@@ -49,6 +49,7 @@ pub enum DiceError {
 }
 
 type DiceVal = u32;
+type RollResults = Vec<DiceVal>;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 /// The main type, representing one or more fair dice of the same type
@@ -63,6 +64,74 @@ pub struct Dice {
     /// The number doesn't have to comply to actual real-world logic,
     /// so you can have however many sides you need
     pub num_sides: DiceVal,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+/// This type represents a roll of the dice
+///
+/// Provides easy handle for common dice operations,
+/// such as dropping or keeping values,
+/// finding the sum, etc.
+///
+/// The values are guaranteed to be sorted in ascending order
+pub struct DiceRoll {
+    values: RollResults,
+}
+
+impl DiceRoll {
+    /// Get the sum of the roll's values
+    pub fn sum(&self) -> DiceVal {
+        self.values.iter().sum()
+    }
+
+    /// Apply a function to the roll. Produces a new roll
+    pub fn and<F>(self, f: F) -> Self
+    where
+        F: FnOnce(RollResults) -> RollResults,
+    {
+        let mut new_values = f(self.values);
+        new_values.sort();
+
+        Self { values: new_values }
+    }
+
+    /// Keep the n highest dice
+    pub fn keep(self, n: usize) -> Self {
+        self.and(|res| res.into_iter().rev().take(n).rev().collect())
+    }
+
+    /// Drop the n lowest dice
+    pub fn drop(self, n: usize) -> Self {
+        self.and(|res| res.into_iter().skip(n).collect())
+    }
+
+    /// Check to see if the roll result is empty
+    ///
+    /// This can occur while modifying the roll
+    pub fn is_empty(&self) -> bool {
+        self.values.is_empty()
+    }
+}
+
+impl Into<Vec<DiceVal>> for DiceRoll {
+    fn into(self) -> Vec<DiceVal> {
+        self.values
+    }
+}
+
+impl<T> From<Vec<T>> for DiceRoll
+where
+    T: Into<DiceVal>,
+{
+    fn from(value: Vec<T>) -> Self {
+        let mut temp = Vec::from(value)
+            .into_iter()
+            .map(Into::into)
+            .collect::<Vec<_>>();
+
+        temp.sort();
+        Self { values: temp }
+    }
 }
 
 impl Dice {
