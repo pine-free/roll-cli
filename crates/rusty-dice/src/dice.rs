@@ -6,15 +6,15 @@ use super::DiceError;
 
 use std::str::FromStr;
 
-use super::DropHighest;
+use super::modifiers::DropHighest;
 
-use super::KeepLowest;
+use super::modifiers::KeepLowest;
 
-use super::DropLowest;
+use super::modifiers::DropLowest;
 
-use super::KeepHighest;
+use super::modifiers::KeepHighest;
 
-use super::RollMapping;
+use crate::modifiers::RollMapping;
 
 use super::RollResults;
 

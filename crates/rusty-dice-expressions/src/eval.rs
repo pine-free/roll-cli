@@ -5,7 +5,7 @@ use crate::{
     parse::{Atom, Expr, ExprKind, Operation, parse_expr, parse_expr_kind},
 };
 use log::debug;
-use rusty_dice::RollMapping;
+use rusty_dice::modifiers::RollMapping;
 
 /// Trait for objects that support evaluation
 ///

@@ -10,8 +10,7 @@ use nom::{
     multi::{many0, separated_list1},
     sequence::{preceded, separated_pair},
 };
-use rusty_dice::dice;
-use rusty_dice::{DropHighest, DropLowest, KeepHighest, KeepLowest, RollModifiers, dice::Dice};
+use rusty_dice::{Dice, DropHighest, DropLowest, KeepHighest, KeepLowest, RollModifiers};
 
 type ParseRes<'a, T> = IResult<&'a str, T, Error<&'a str>>;
 
@@ -48,7 +47,7 @@ pub enum Atom {
     /// Example: "2d6"
     Dice {
         /// The dice representation itself
-        dice: dice::Dice,
+        dice: Dice,
 
         /// Modifiers that may apply to the roll
         modifiers: Option<Vec<RollModifiers>>,
@@ -77,7 +76,7 @@ impl Atom {
     }
 
     /// A helper function for extracting the dice value if one is present in this atom
-    pub fn dice(&self) -> Option<dice::Dice> {
+    pub fn dice(&self) -> Option<Dice> {
         match self {
             Atom::Dice { dice: op, .. } => Some(*op),
             _ => None,
@@ -122,8 +121,8 @@ impl From<i32> for Atom {
     }
 }
 
-impl From<dice::Dice> for Atom {
-    fn from(val: dice::Dice) -> Self {
+impl From<Dice> for Atom {
+    fn from(val: Dice) -> Self {
         Atom::Dice {
             dice: val,
             modifiers: None,
@@ -186,8 +185,8 @@ impl Expr {
     }
 }
 
-impl From<dice::Dice> for Expr {
-    fn from(val: dice::Dice) -> Self {
+impl From<Dice> for Expr {
+    fn from(val: Dice) -> Self {
         Expr::Constant(val.into())
     }
 }
@@ -516,13 +515,13 @@ mod tests {
 
     #[test]
     fn test_dice_repr() {
-        let atom: Atom = dice::Dice::new(2, 10).into();
+        let atom: Atom = Dice::new(2, 10).into();
         assert_eq!(format!("{}", atom), "2d10".to_string())
     }
 
     #[test]
     fn test_expr_repr() {
-        let expr: Expr = application(Operation::Add, dice::Dice::new(1, 6), 5);
+        let expr: Expr = application(Operation::Add, Dice::new(1, 6), 5);
         assert_eq!(format!("{}", expr), "1d6 + 5");
     }
 }
