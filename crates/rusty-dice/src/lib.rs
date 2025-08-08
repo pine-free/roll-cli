@@ -182,10 +182,10 @@ impl RollModifiers {
     /// Provides access to the inner roll modifier object
     pub fn inner(&self) -> Box<dyn DisplayableModifier> {
         match self {
-            RollModifiers::KeepLowest(i) => Box::new(i.clone()),
-            RollModifiers::KeepHighest(i) => Box::new(i.clone()),
-            RollModifiers::DropLowest(i) => Box::new(i.clone()),
-            RollModifiers::DropHighest(i) => Box::new(i.clone()),
+            RollModifiers::KeepLowest(i) => Box::new(*i),
+            RollModifiers::KeepHighest(i) => Box::new(*i),
+            RollModifiers::DropLowest(i) => Box::new(*i),
+            RollModifiers::DropHighest(i) => Box::new(*i),
         }
     }
 }
@@ -193,7 +193,7 @@ impl RollModifiers {
 impl std::fmt::Display for RollModifiers {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let repr = self.inner().to_string();
-        write!(f, "{}", repr)
+        write!(f, "{repr}")
     }
 }
 
@@ -284,9 +284,9 @@ impl DiceRoll {
     }
 }
 
-impl Into<Vec<DiceVal>> for DiceRoll {
-    fn into(self) -> Vec<DiceVal> {
-        self.values
+impl From<DiceRoll> for Vec<DiceVal> {
+    fn from(val: DiceRoll) -> Self {
+        val.values
     }
 }
 
@@ -295,10 +295,7 @@ where
     T: Into<DiceVal>,
 {
     fn from(value: Vec<T>) -> Self {
-        let mut temp = Vec::from(value)
-            .into_iter()
-            .map(Into::into)
-            .collect::<Vec<_>>();
+        let mut temp = value.into_iter().map(Into::into).collect::<Vec<_>>();
 
         temp.sort();
         Self { values: temp }

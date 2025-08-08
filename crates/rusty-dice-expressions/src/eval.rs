@@ -5,7 +5,7 @@ use crate::{
     parse::{Atom, Expr, ExprKind, Operation, parse_expr, parse_expr_kind},
 };
 use log::debug;
-use rusty_dice::{RollMapping, RollModifier};
+use rusty_dice::RollMapping;
 
 /// Trait for objects that support evaluation
 ///
@@ -36,7 +36,7 @@ impl Eval for Expr {
                 modifiers,
             }) => {
                 let mut roll = die.roll();
-                debug!("Roll results for {die}: {:#?}", roll);
+                debug!("Roll results for {die}: {roll:#?}");
 
                 let res = if let Some(mods) = modifiers {
                     for modif in mods.iter() {
@@ -46,7 +46,7 @@ impl Eval for Expr {
                         );
                     }
 
-                    debug!("Roll results for {die} after modifiers: {:#?}", roll);
+                    debug!("Roll results for {die} after modifiers: {roll:#?}");
                     roll
                 } else {
                     roll
@@ -76,10 +76,7 @@ impl Eval for Expr {
     }
 
     fn eval_complete(&self) -> bool {
-        match self {
-            Expr::Constant(Atom::Number(_)) => true,
-            _ => false,
-        }
+        matches!(self, Expr::Constant(Atom::Number(_)))
     }
 }
 

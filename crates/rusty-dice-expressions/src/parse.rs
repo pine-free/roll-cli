@@ -10,11 +10,9 @@ use nom::{
     multi::{many0, separated_list1},
     sequence::{preceded, separated_pair},
 };
-use rusty_dice::{Dice, DropLowest, KeepHighest, RollModifier, RollModifiers};
+use rusty_dice::{Dice, DropLowest, KeepHighest, RollModifiers};
 
 type ParseRes<'a, T> = IResult<&'a str, T, Error<&'a str>>;
-
-trait RollModifierDisplayable: RollModifier + std::fmt::Display + std::fmt::Debug {}
 
 /// Mathematical operations supported by this crate
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -37,7 +35,7 @@ impl fmt::Display for Operation {
             Operation::Sub => "-",
         };
 
-        write!(f, "{}", repr)
+        write!(f, "{repr}")
     }
 }
 
@@ -113,28 +111,28 @@ impl fmt::Display for Atom {
             Atom::Number(n) => n.to_string(),
             Atom::Operation(operation) => operation.to_string(),
         };
-        write!(f, "{}", inner)
+        write!(f, "{inner}")
     }
 }
 
-impl Into<Atom> for i32 {
-    fn into(self) -> Atom {
-        Atom::Number(self)
+impl From<i32> for Atom {
+    fn from(val: i32) -> Self {
+        Atom::Number(val)
     }
 }
 
-impl Into<Atom> for Dice {
-    fn into(self) -> Atom {
+impl From<Dice> for Atom {
+    fn from(val: Dice) -> Self {
         Atom::Dice {
-            dice: self,
+            dice: val,
             modifiers: None,
         }
     }
 }
 
-impl Into<Atom> for Operation {
-    fn into(self) -> Atom {
-        Atom::Operation(self)
+impl From<Operation> for Atom {
+    fn from(val: Operation) -> Self {
+        Atom::Operation(val)
     }
 }
 
@@ -167,10 +165,10 @@ impl fmt::Display for Expr {
         let repr = match self {
             Expr::Constant(atom) => atom.to_string(),
             Expr::Application(expr, (l, r)) => {
-                format!("{} {} {}", l.to_string(), expr.to_string(), r.to_string())
+                format!("{l} {expr} {r}")
             }
         };
-        write!(f, "{}", repr)
+        write!(f, "{repr}")
     }
 }
 
@@ -187,15 +185,15 @@ impl Expr {
     }
 }
 
-impl Into<Expr> for Dice {
-    fn into(self) -> Expr {
-        Expr::Constant(self.into())
+impl From<Dice> for Expr {
+    fn from(val: Dice) -> Self {
+        Expr::Constant(val.into())
     }
 }
 
-impl Into<Expr> for i32 {
-    fn into(self) -> Expr {
-        Expr::Constant(self.into())
+impl From<i32> for Expr {
+    fn from(val: i32) -> Self {
+        Expr::Constant(val.into())
     }
 }
 
@@ -229,14 +227,11 @@ impl fmt::Display for ExprKind {
             ExprKind::Simple(expr) => expr.to_string(),
             ExprKind::Labeled(l, expr) => format!("{l}: {expr}"),
             ExprKind::Separated(expr_kinds) => {
-                let res = expr_kinds
-                    .into_iter()
-                    .map(|e| e.to_string())
-                    .collect::<Vec<_>>();
+                let res = expr_kinds.iter().map(|e| e.to_string()).collect::<Vec<_>>();
                 res.join(";").to_string()
             }
         };
-        write!(f, "{}", repr)
+        write!(f, "{repr}")
     }
 }
 
@@ -345,7 +340,7 @@ fn parse_expr_kind_unit(i: &str) -> ParseRes<ExprKind> {
 fn parse_separated(i: &str) -> ParseRes<ExprKind> {
     map(
         separated_list1(preceded(multispace0, tag(";")), parse_expr_kind_unit),
-        |exprs| ExprKind::Separated(exprs),
+        ExprKind::Separated,
     )
     .parse(i)
 }
