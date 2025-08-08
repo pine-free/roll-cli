@@ -55,7 +55,7 @@ pub enum RollModifier {
     DropLowest(usize),
 }
 
-impl rusty_dice::RollModifier<Vec<u32>> for RollModifier {
+impl rusty_dice::RollModifier for RollModifier {
     fn apply(self, results: Vec<u32>) -> Vec<u32> {
         match self {
             RollModifier::KeepHighest(n) => rusty_dice::DiceRoll::from(results).keep(n).into(),
@@ -68,7 +68,7 @@ impl rusty_dice::RollModifier<Vec<u32>> for RollModifier {
     type Output = Vec<u32>;
 }
 
-impl rusty_dice::RollModifier<Vec<u32>> for &RollModifier {
+impl rusty_dice::RollModifier for &RollModifier {
     fn apply(self, results: Vec<u32>) -> Vec<u32> {
         self.clone().apply(results)
     }
