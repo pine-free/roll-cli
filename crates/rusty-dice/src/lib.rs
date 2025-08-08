@@ -56,15 +56,22 @@ type RollResults = Vec<DiceVal>;
 ///
 /// This trait is implemented for closures, and you can
 /// define your own modifiers by implementing it
-pub trait RollModifier {
+pub trait RollModifier<T> {
+    /// The output of the modifier
+    ///
+    /// Typically this is RollResults, but other variants are supported
+    type Output;
+
     /// The method that modifies the results
-    fn apply(self, results: RollResults) -> RollResults;
+    fn apply(self, input: T) -> Self::Output;
 }
 
-impl<F> RollModifier for F
+impl<F> RollModifier<RollResults> for F
 where
     F: FnOnce(RollResults) -> RollResults,
 {
+    type Output = Vec<u32>;
+
     fn apply(self, results: RollResults) -> RollResults {
         self(results)
     }
@@ -111,7 +118,7 @@ impl DiceRoll {
     /// Apply a modifier to the roll. Produces a new roll
     pub fn and<F>(self, f: F) -> Self
     where
-        F: RollModifier,
+        F: RollModifier<RollResults, Output = RollResults>,
     {
         let mut new_values = f.apply(self.values);
         new_values.sort();
