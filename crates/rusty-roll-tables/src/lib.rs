@@ -7,6 +7,12 @@ use thiserror::Error;
 
 pub mod parse;
 
+#[derive(Debug, Error, PartialEq, Eq)]
+pub enum RollTableError {
+    #[error("failed to parse roll table")]
+    ParsingError(String),
+}
+
 #[cfg(test)]
 mod tests {
     use crate::data::RollTable;
