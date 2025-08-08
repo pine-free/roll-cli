@@ -100,6 +100,45 @@ impl From<CardType> for usize {
     }
 }
 
+impl CardType {
+    fn from_usize(n: usize) -> Option<Self> {
+        Some(match n {
+            1 => Self::Ace,
+            2..=10 => Self::Digit(n as u32),
+            11 => Self::Jack,
+            12 => Self::Queen,
+            13 => Self::King,
+            _ => return None,
+        })
+    }
+}
+
+impl std::iter::Step for CardType {
+    fn steps_between(start: &Self, end: &Self) -> (usize, Option<usize>) {
+        let start: usize = usize::from(*start);
+        let end: usize = usize::from(*end);
+
+        if start > end {
+            return (0, None);
+        }
+
+        let n = end.saturating_sub(start);
+        (n, Some(n))
+    }
+
+    fn forward_checked(start: Self, count: usize) -> Option<Self> {
+        Self::from_usize(usize::from(start) + count)
+    }
+
+    fn backward_checked(start: Self, count: usize) -> Option<Self> {
+        if usize::from(start) < count {
+            return None;
+        }
+
+        Self::from_usize(Into::<usize>::into(start) - count)
+    }
+}
+
 impl Display for CardType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let repr = match self {
@@ -229,5 +268,15 @@ mod tests {
         use Suit::*;
         let range = (Spades..=Hearts).collect::<Vec<_>>();
         assert_eq!(range, vec![Spades, Diamonds, Clubs, Hearts]);
+    }
+
+    #[test]
+    fn test_range_type() {
+        use CardType::*;
+        let range = (Ace..=King).collect::<Vec<_>>();
+        let mut target = vec![Ace];
+        target.extend((2..=10).map(Digit));
+        target.extend(vec![Jack, Queen, King].iter());
+        assert_eq!(range, target);
     }
 }
