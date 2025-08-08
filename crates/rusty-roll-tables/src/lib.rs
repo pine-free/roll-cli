@@ -3,6 +3,10 @@
 pub mod data;
 pub use data::RollTable;
 
+use thiserror::Error;
+
+pub mod parse;
+
 #[cfg(test)]
 mod tests {
     use crate::data::RollTable;
