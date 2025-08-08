@@ -73,3 +73,12 @@ impl Distribution<CardType> for StandardUniform {
         }
     }
 }
+
+impl Distribution<Card> for StandardUniform {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Card {
+        let card_type: CardType = rng.random();
+        let suit: Suit = rng.random();
+
+        Card::new(card_type, suit)
+    }
+}
