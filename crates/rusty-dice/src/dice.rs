@@ -158,7 +158,7 @@ impl FromStr for Dice {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let dice_parts = s.split("d").collect::<Vec<_>>();
 
-        let to_err = || DiceError::InvalidExpression(s.to_string());
+        let to_err = || DiceError::DiceParsingError(s.to_string());
 
         if dice_parts.len() != 2 {
             return Err(to_err());

@@ -48,7 +48,7 @@ pub use modifiers::{
 pub enum DiceError {
     /// Thrown when an attempt to parse a string into [`Dice`] fails
     #[error("Failed to parse dice expression: `{0}`")]
-    InvalidExpression(String),
+    DiceParsingError(String),
 }
 
 type DiceVal = u32;
@@ -92,7 +92,7 @@ mod tests {
 
         for test in test_cases {
             let res = test.parse::<dice::Dice>();
-            assert_eq!(res, Err(DiceError::InvalidExpression(test)));
+            assert_eq!(res, Err(DiceError::DiceParsingError(test)));
         }
     }
 }
