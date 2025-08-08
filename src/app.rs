@@ -3,14 +3,14 @@ use clap::Parser;
 use log::debug;
 
 use crate::cli::CliArgs;
-use rusty_dice_expressions::{eval::Eval, parse::ExprKind};
+use rusty_dice_expressions::{eval::Eval, parse::ExprKind, Expr};
 
 #[derive(Debug, Clone)]
 pub struct App {
     args: CliArgs,
 }
 
-fn eval_expr(expression: &ExprKind) -> Result<ExprKind> {
+fn eval_expr(expression: &Expr) -> Result<Expr> {
     let expr = expression.clone().eval()?;
     debug!("Expression after evaluation: {expr:#?}");
     Ok(expr)
@@ -18,8 +18,8 @@ fn eval_expr(expression: &ExprKind) -> Result<ExprKind> {
 
 fn format_expr(expr_kind: &ExprKind) -> Result<String> {
     let res = match expr_kind {
-        ExprKind::Simple(expr) => format!("{}: {}", expr, eval_expr(expr_kind)?),
-        ExprKind::Labeled(l, _) => format!("{l}: {}", eval_expr(expr_kind)?),
+        ExprKind::Simple(expr) => format!("{}: {}", expr, eval_expr(expr)?),
+        ExprKind::Labeled(l, expr) => format!("{l}: {}", eval_expr(expr)?),
         ExprKind::Separated(expr_kinds) => expr_kinds
             .iter()
             .map(format_expr)
