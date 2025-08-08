@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use rand::distr::{Distribution, StandardUniform};
 use rand::prelude::*;
 
@@ -15,6 +17,18 @@ pub enum Suit {
 
     /// Represents the hearts suit
     Hearts,
+}
+
+impl Display for Suit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let repr = match self {
+            Suit::Spades => "S",
+            Suit::Diamonds => "D",
+            Suit::Clubs => "C",
+            Suit::Hearts => "H",
+        };
+        write!(f, "{repr}")
+    }
 }
 
 /// The type of card
@@ -36,11 +50,31 @@ pub enum CardType {
     King,
 }
 
+impl Display for CardType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let repr = match self {
+            CardType::Ace => "A".to_string(),
+            CardType::Digit(n) => format!("{n}"),
+            CardType::Jack => "J".to_string(),
+            CardType::Queen => "Q".to_string(),
+            CardType::King => "K".to_string(),
+        };
+        write!(f, "{repr}")
+    }
+}
+
 /// Repressents a playing card
 #[derive(Clone, Debug, Copy, PartialEq, Eq, Hash)]
 pub struct Card {
     card_type: CardType,
     suit: Suit,
+}
+
+impl Display for Card {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Card { card_type, suit } = self;
+        write!(f, "{card_type}{suit}")
+    }
 }
 
 impl Card {
@@ -127,10 +161,16 @@ mod tests {
     use std::collections::HashSet;
 
     #[test]
-    fn test_many_random_cards() {
+    fn many_random_cards() {
         let cards = draw_n(10);
         let hashset: HashSet<Card> = HashSet::from_iter(cards.clone().into_iter());
 
         assert_eq!(hashset.len(), cards.len());
+    }
+
+    #[test]
+    fn string_repr() {
+        let card = Card::new(CardType::Ace, Suit::Spades);
+        assert_eq!(card.to_string(), "AS".to_string());
     }
 }
