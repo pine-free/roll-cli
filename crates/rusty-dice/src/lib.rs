@@ -62,6 +62,9 @@ pub mod modifiers;
 /// Main dice constructs
 pub mod dice;
 
+/// Main cards constructs
+pub mod cards;
+
 #[cfg(test)]
 mod tests {
     use super::dice::*;
