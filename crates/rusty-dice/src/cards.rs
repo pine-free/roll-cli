@@ -105,6 +105,28 @@ pub enum CardType {
     King,
 }
 
+impl FromStr for CardType {
+    type Err = crate::DiceError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Ok(res) = s.parse::<u32>()
+            && (2..=10).contains(&res)
+        {
+            return Ok(Self::Digit(res));
+        }
+
+        match s {
+            "A" => Ok(Self::Ace),
+            "J" => Ok(Self::Jack),
+            "Q" => Ok(Self::Queen),
+            "K" => Ok(Self::King),
+            _ => Err(crate::DiceError::CardParsingError(format!(
+                "could not parse card type: {s}"
+            ))),
+        }
+    }
+}
+
 impl From<CardType> for usize {
     fn from(value: CardType) -> Self {
         match value {

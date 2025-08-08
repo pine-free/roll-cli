@@ -50,6 +50,10 @@ pub enum DiceError {
     /// Thrown when an attempt to parse a string into [`Dice`] fails
     #[error("Failed to parse dice expression: `{0}`")]
     DiceParsingError(String),
+
+    /// Thrown when an attempt to parse a string into [`Card`]
+    #[error("Failed to parse card expression: `{0}`")]
+    CardParsingError(String),
 }
 
 type DiceVal = u32;
