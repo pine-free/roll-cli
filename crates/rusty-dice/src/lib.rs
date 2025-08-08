@@ -66,6 +66,19 @@ pub trait RollModifier<T> {
     fn apply(self, input: T) -> Self::Output;
 }
 
+/// Keep n highest dice
+#[derive(Clone, Copy, Debug)]
+pub struct KeepHighest(usize);
+
+impl RollModifier<RollResults> for KeepHighest {
+    type Output = RollResults;
+
+    fn apply(self, input: RollResults) -> Self::Output {
+        let n_skip = input.len().saturating_sub(self.0);
+        input.into_iter().skip(n_skip).collect()
+    }
+}
+
 impl<F> RollModifier<RollResults> for F
 where
     F: FnOnce(RollResults) -> RollResults,
