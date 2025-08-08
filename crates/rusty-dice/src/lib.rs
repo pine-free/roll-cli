@@ -31,6 +31,7 @@
 //! # }
 //! ```
 #![deny(missing_docs)]
+#![feature(step_trait)]
 
 use thiserror::Error;
 
