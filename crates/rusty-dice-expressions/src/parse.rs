@@ -374,8 +374,19 @@ fn parse_application(i: &str) -> ParseRes<Expr> {
     .parse(i)
 }
 
+fn parse_draw_expr(i: &str) -> ParseRes<Expr> {
+    map(preceded(tag("draw"), digit1), |n_draw: &str| {
+        Expr::DrawCards(n_draw.parse().unwrap())
+    })
+    .parse(i)
+}
+
 pub(crate) fn parse_expr(i: &str) -> ParseRes<Expr> {
-    preceded(multispace0, alt((parse_application, parse_constant))).parse(i)
+    preceded(
+        multispace0,
+        alt((parse_application, parse_constant, parse_draw_expr)),
+    )
+    .parse(i)
 }
 
 fn parse_simple(i: &str) -> ParseRes<ExprKind> {
@@ -551,6 +562,19 @@ mod tests {
                 simple_expr_kind(-2),
                 labeled_expr_kind("my roll", Dice::new(1, 4))
             ])
+        )
+    }
+
+    #[test]
+    fn test_parse_draw_expression() {
+        let expr = "your cards are: draw3";
+        let (_, expr) = parse_expr_kind(expr).unwrap();
+        assert_eq!(
+            expr,
+            ExprKind::Separated(vec![ExprKind::Labeled(
+                "your cards are".into(),
+                Expr::DrawCards(3)
+            )])
         )
     }
 
