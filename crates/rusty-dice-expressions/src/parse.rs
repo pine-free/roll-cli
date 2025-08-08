@@ -255,7 +255,7 @@ fn parse_dice_keep_highest(i: &str) -> ParseRes<KeepHighest> {
     .parse(i)
 }
 
-fn parse_dice_drop(i: &str) -> ParseRes<DropLowest> {
+fn parse_dice_drop_lowest(i: &str) -> ParseRes<DropLowest> {
     map(
         preceded(alt((tag("dl"), tag("d"))), digit1),
         |keep_n: &str| DropLowest(keep_n.parse().unwrap()),
@@ -269,7 +269,7 @@ fn parse_dice(i: &str) -> ParseRes<Atom> {
             recognize(separated_pair(digit1, tag("d"), digit1)),
             many0(alt((
                 map(parse_dice_keep_highest, RollModifiers::KeepHighest),
-                map(parse_dice_drop, RollModifiers::DropLowest),
+                map(parse_dice_drop_lowest, RollModifiers::DropLowest),
             ))),
         ),
         |(dice_str, mods)| Atom::Dice {
