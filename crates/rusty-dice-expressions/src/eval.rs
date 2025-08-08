@@ -53,7 +53,7 @@ impl Eval for Expr {
                 }
                 .sum();
 
-                Ok(Expr::Constant(Atom::Number(res as i32)))
+                Ok((res as i32).into())
             }
 
             Expr::Application(expr, (l, r)) => {
@@ -67,12 +67,12 @@ impl Eval for Expr {
                     .ok_or(ExpressionError::EvaluationError)?;
 
                 match expr {
-                    Operation::Add => Ok(Expr::Constant(Atom::Number(l + r))),
-                    Operation::Sub => Ok(Expr::Constant(Atom::Number(l - r))),
+                    Operation::Add => Ok((l + r).into()),
+                    Operation::Sub => Ok((l - r).into()),
                 }
             }
 
-            Expr::DrawCards(n) => Ok(Expr::Constant(Atom::CardList(draw_n(n)))),
+            Expr::DrawCards(n) => Ok(draw_n(n).into()),
             Expr::Constant(_) => Ok(self),
         }
     }

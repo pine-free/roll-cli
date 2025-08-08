@@ -146,6 +146,18 @@ impl From<Operation> for Atom {
     }
 }
 
+impl From<Card> for Atom {
+    fn from(value: Card) -> Self {
+        Atom::from(vec![value])
+    }
+}
+
+impl From<Vec<Card>> for Atom {
+    fn from(value: Vec<Card>) -> Self {
+        Atom::CardList(value)
+    }
+}
+
 /// A simple dice expression
 ///
 /// Example: "5d10 + 4d6 + 10"
@@ -205,6 +217,18 @@ impl Expr {
 impl From<Dice> for Expr {
     fn from(val: Dice) -> Self {
         Expr::Constant(val.into())
+    }
+}
+
+impl From<Vec<Card>> for Expr {
+    fn from(value: Vec<Card>) -> Self {
+        Expr::Constant(value.into())
+    }
+}
+
+impl From<Card> for Expr {
+    fn from(value: Card) -> Self {
+        Expr::Constant(value.into())
     }
 }
 
