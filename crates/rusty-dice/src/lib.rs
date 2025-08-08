@@ -103,6 +103,11 @@ impl DiceRoll {
         self.values.iter().sum()
     }
 
+    /// Get how many results are in this roll
+    pub fn len(&self) -> usize {
+        self.values.len()
+    }
+
     /// Apply a modifier to the roll. Produces a new roll
     pub fn and<F>(self, f: F) -> Self
     where
@@ -116,12 +121,24 @@ impl DiceRoll {
 
     /// Keep the n highest dice
     pub fn keep(self, n: usize) -> Self {
-        self.and(|res: RollResults| res.into_iter().rev().take(n).rev().collect())
+        let n_skip = self.len().saturating_sub(n);
+        self.and(|res: Vec<u32>| res.into_iter().skip(n_skip).collect())
     }
 
     /// Drop the n lowest dice
     pub fn drop(self, n: usize) -> Self {
-        self.and(|res: RollResults| res.into_iter().skip(n).collect())
+        self.and(|res: Vec<u32>| res.into_iter().skip(n).collect())
+    }
+
+    /// Keep the n lowest dice
+    pub fn keep_lowest(self, n: usize) -> Self {
+        self.and(|res: Vec<u32>| res.into_iter().take(n).collect())
+    }
+
+    /// Drop the n highest dice
+    pub fn drop_highest(self, n: usize) -> Self {
+        let n_take = self.len().saturating_sub(n);
+        self.and(|res: Vec<u32>| res.into_iter().take(n_take).collect())
     }
 
     /// Check to see if the roll result is empty
