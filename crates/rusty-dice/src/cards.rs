@@ -33,7 +33,14 @@ impl Suit {
 
 impl std::iter::Step for Suit {
     fn steps_between(start: &Self, end: &Self) -> (usize, Option<usize>) {
-        let n = (*end as usize).saturating_sub(*start as usize);
+        let start = *start as usize;
+        let end = *end as usize;
+
+        if start > end {
+            return (0, None);
+        }
+
+        let n = end.saturating_sub(start);
         (n, Some(n))
     }
 
