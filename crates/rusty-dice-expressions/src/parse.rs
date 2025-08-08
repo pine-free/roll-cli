@@ -10,7 +10,7 @@ use nom::{
     multi::{many0, separated_list1},
     sequence::{preceded, separated_pair},
 };
-use rusty_dice::{Dice, DropLowest, KeepHighest, RollModifiers};
+use rusty_dice::{Dice, DropHighest, DropLowest, KeepHighest, KeepLowest, RollModifiers};
 
 type ParseRes<'a, T> = IResult<&'a str, T, Error<&'a str>>;
 
@@ -258,8 +258,22 @@ fn parse_dice_keep_highest(i: &str) -> ParseRes<KeepHighest> {
 fn parse_dice_drop_lowest(i: &str) -> ParseRes<DropLowest> {
     map(
         preceded(alt((tag("dl"), tag("d"))), digit1),
-        |keep_n: &str| DropLowest(keep_n.parse().unwrap()),
+        |drop_n: &str| DropLowest(drop_n.parse().unwrap()),
     )
+    .parse(i)
+}
+
+fn parse_dice_drop_highest(i: &str) -> ParseRes<DropHighest> {
+    map(preceded(tag("dh"), digit1), |drop_n: &str| {
+        DropHighest(drop_n.parse().unwrap())
+    })
+    .parse(i)
+}
+
+fn parse_dice_keep_lowest(i: &str) -> ParseRes<KeepLowest> {
+    map(preceded(tag("kl"), digit1), |keep_n: &str| {
+        KeepLowest(keep_n.parse().unwrap())
+    })
     .parse(i)
 }
 
@@ -268,6 +282,8 @@ fn parse_dice(i: &str) -> ParseRes<Atom> {
         (
             recognize(separated_pair(digit1, tag("d"), digit1)),
             many0(alt((
+                map(parse_dice_keep_lowest, RollModifiers::KeepLowest),
+                map(parse_dice_drop_highest, RollModifiers::DropHighest),
                 map(parse_dice_keep_highest, RollModifiers::KeepHighest),
                 map(parse_dice_drop_lowest, RollModifiers::DropLowest),
             ))),
@@ -390,20 +406,52 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_die_keep() {
-        let die = "2d6k1";
-        let (_, die) = parse_dice(die).unwrap();
+    fn test_parse_die_keep_highest() {
+        let die1 = "2d6k1";
+        let die2 = "2d6kh1";
+        let (_, die1) = parse_dice(die1).unwrap();
+        let (_, die2) = parse_dice(die2).unwrap();
         assert_eq!(
-            die,
+            die1,
             Atom::Dice {
                 dice: Dice::new(2, 6),
                 modifiers: Some(vec![RollModifiers::KeepHighest(KeepHighest(1))])
-            }
-        )
+            },
+            "the basic expression parsed wrong"
+        );
+        assert_eq!(die1, die2, "the modified variant parsed wrong");
     }
 
     #[test]
-    fn test_parse_die_drop() {
+    fn test_parse_die_keep_lowest() {
+        let die1 = "2d6kl1";
+        let (_, die1) = parse_dice(die1).unwrap();
+        assert_eq!(
+            die1,
+            Atom::Dice {
+                dice: Dice::new(2, 6),
+                modifiers: Some(vec![RollModifiers::KeepLowest(KeepLowest(1))])
+            },
+            "the basic expression parsed wrong"
+        );
+    }
+
+    #[test]
+    fn test_parse_die_drop_highest() {
+        let die1 = "2d6dh1";
+        let (_, die1) = parse_dice(die1).unwrap();
+        assert_eq!(
+            die1,
+            Atom::Dice {
+                dice: Dice::new(2, 6),
+                modifiers: Some(vec![RollModifiers::DropHighest(DropHighest(1))])
+            },
+            "the basic expression parsed wrong"
+        );
+    }
+
+    #[test]
+    fn test_parse_die_drop_lowest() {
         let die1 = "2d6d1";
         let die2 = "2d6dl1";
         let (_, die1) = parse_dice(die1).unwrap();
