@@ -6,3 +6,5 @@ edition = "2024"
 [dependencies]
 nom = "8.0.0"
 thiserror = "2.0.12"
+rusty-dice = { path = "../rusty-dice" }
+log = "0.4.27"
