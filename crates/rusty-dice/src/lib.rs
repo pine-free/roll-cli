@@ -69,7 +69,17 @@ pub trait RollModifier {
 /// A common kind of RollModifier that one set of values
 /// of a roll to another one
 pub trait RollMapping: RollModifier {
-    fn apply(self, input: RollResults) -> RollResults;
+    /// Map the values
+    fn map(self, input: RollResults) -> RollResults;
+}
+
+impl<M> RollMapping for M
+where
+    M: RollModifier<Output = RollResults>,
+{
+    fn map(self, input: RollResults) -> RollResults {
+        self.apply(input)
+    }
 }
 
 /// Keep n highest dice
@@ -98,6 +108,7 @@ impl RollModifier for DropLowest {
     }
 }
 
+/// Keep n lowest dice
 #[derive(Clone, Copy, Debug)]
 pub struct KeepLowest(usize);
 
@@ -109,6 +120,7 @@ impl RollModifier for KeepLowest {
     }
 }
 
+/// Drop n highest dice
 #[derive(Clone, Copy, Debug)]
 pub struct DropHighest(usize);
 
@@ -173,9 +185,9 @@ impl DiceRoll {
     /// Apply a modifier to the roll. Produces a new roll
     pub fn and<F>(self, f: F) -> Self
     where
-        F: RollModifier<RollResults, Output = RollResults>,
+        F: RollMapping,
     {
-        let mut new_values = f.apply(self.values);
+        let mut new_values = f.map(self.values);
         new_values.sort();
 
         Self { values: new_values }
