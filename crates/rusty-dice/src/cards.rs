@@ -6,6 +6,7 @@ use rand::prelude::*;
 /// Card suit
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Suit {
+    /// Represents the spades suit
     Spades,
 
     /// Represents the diamonds suit
