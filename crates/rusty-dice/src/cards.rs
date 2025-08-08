@@ -59,3 +59,17 @@ impl Distribution<Suit> for StandardUniform {
         }
     }
 }
+
+impl Distribution<CardType> for StandardUniform {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> CardType {
+        let card_type = rng.random_range(2..=14);
+        match card_type {
+            2..=10 => CardType::Digit(card_type),
+            11 => CardType::Jack,
+            12 => CardType::Queen,
+            13 => CardType::King,
+            14 => CardType::Ace,
+            _ => unreachable!(),
+        }
+    }
+}
