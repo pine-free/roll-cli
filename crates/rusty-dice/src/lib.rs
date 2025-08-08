@@ -195,24 +195,22 @@ impl DiceRoll {
 
     /// Keep the n highest dice
     pub fn keep(self, n: usize) -> Self {
-        let n_skip = self.len().saturating_sub(n);
-        self.and(|res: Vec<u32>| res.into_iter().skip(n_skip).collect())
+        self.and(KeepHighest(n))
     }
 
     /// Drop the n lowest dice
     pub fn drop(self, n: usize) -> Self {
-        self.and(|res: Vec<u32>| res.into_iter().skip(n).collect())
+        self.and(DropLowest(n))
     }
 
     /// Keep the n lowest dice
     pub fn keep_lowest(self, n: usize) -> Self {
-        self.and(|res: Vec<u32>| res.into_iter().take(n).collect())
+        self.and(KeepLowest(n))
     }
 
     /// Drop the n highest dice
     pub fn drop_highest(self, n: usize) -> Self {
-        let n_take = self.len().saturating_sub(n);
-        self.and(|res: Vec<u32>| res.into_iter().take(n_take).collect())
+        self.and(DropHighest(n))
     }
 
     /// Check to see if the roll result is empty
