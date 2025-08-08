@@ -42,10 +42,16 @@ impl fmt::Display for Operation {
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// Roll modifier representations
 pub enum RollModifier {
-    /// Keep modifier
+    /// Keep n highest dice
     KeepHighest(usize),
 
-    /// Drop modifier
+    /// Keep n lowest dice
+    KeepLowest(usize),
+
+    /// Drop n highest dice
+    DropHighest(usize),
+
+    /// Drop n lowest dice
     DropLowest(usize),
 }
 
@@ -54,6 +60,8 @@ impl rusty_dice::RollModifier for RollModifier {
         match self {
             RollModifier::KeepHighest(n) => rusty_dice::DiceRoll::from(results).keep(n).into(),
             RollModifier::DropLowest(n) => rusty_dice::DiceRoll::from(results).drop(n).into(),
+            RollModifier::KeepLowest(_) => todo!(),
+            RollModifier::DropHighest(_) => todo!(),
         }
     }
 }
@@ -69,6 +77,8 @@ impl fmt::Display for RollModifier {
         let repr = match self {
             RollModifier::KeepHighest(n) => format!("k{n}"),
             RollModifier::DropLowest(n) => format!("d{n}"),
+            RollModifier::KeepLowest(_) => todo!(),
+            RollModifier::DropHighest(_) => todo!(),
         };
         write!(f, "{}", repr)
     }
@@ -285,17 +295,19 @@ fn parse_operation(i: &str) -> ParseRes<Atom> {
     ))
 }
 
-fn parse_dice_keep(i: &str) -> ParseRes<RollModifier> {
-    map(preceded(tag("k"), digit1), |keep_n: &str| {
-        RollModifier::KeepHighest(keep_n.parse().unwrap())
-    })
+fn parse_dice_keep_highest(i: &str) -> ParseRes<RollModifier> {
+    map(
+        preceded(alt((tag("kh"), tag("k"))), digit1),
+        |keep_n: &str| RollModifier::KeepHighest(keep_n.parse().unwrap()),
+    )
     .parse(i)
 }
 
 fn parse_dice_drop(i: &str) -> ParseRes<RollModifier> {
-    map(preceded(tag("d"), digit1), |keep_n: &str| {
-        RollModifier::DropLowest(keep_n.parse().unwrap())
-    })
+    map(
+        preceded(alt((tag("dl"), tag("d"))), digit1),
+        |keep_n: &str| RollModifier::DropLowest(keep_n.parse().unwrap()),
+    )
     .parse(i)
 }
 
@@ -303,7 +315,7 @@ fn parse_dice(i: &str) -> ParseRes<Atom> {
     map(
         (
             recognize(separated_pair(digit1, tag("d"), digit1)),
-            many0(alt((parse_dice_keep, parse_dice_drop))),
+            many0(alt((parse_dice_keep_highest, parse_dice_drop))),
         ),
         |(dice_str, mods)| Atom::Dice {
             dice: dice_str.parse::<Dice>().unwrap(),
@@ -437,15 +449,19 @@ mod tests {
 
     #[test]
     fn test_parse_die_drop() {
-        let die = "2d6d1";
-        let (_, die) = parse_dice(die).unwrap();
+        let die1 = "2d6d1";
+        let die2 = "2d6dl1";
+        let (_, die1) = parse_dice(die1).unwrap();
+        let (_, die2) = parse_dice(die2).unwrap();
         assert_eq!(
-            die,
+            die1,
             Atom::Dice {
                 dice: Dice::new(2, 6),
                 modifiers: Some(vec![RollModifier::DropLowest(1)])
-            }
-        )
+            },
+            "the basic expression parsed wrong"
+        );
+        assert_eq!(die1, die2, "the modified variant parsed wrong");
     }
 
     #[test]
