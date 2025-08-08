@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use std::str::FromStr;
 
 use rand::distr::{Distribution, StandardUniform};
 use rand::prelude::*;
@@ -27,6 +28,22 @@ impl Suit {
             2 => Some(Self::Clubs),
             3 => Some(Self::Hearts),
             _ => None,
+        }
+    }
+}
+
+impl FromStr for Suit {
+    type Err = crate::DiceError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "S" => Ok(Self::Spades),
+            "D" => Ok(Self::Diamonds),
+            "C" => Ok(Self::Clubs),
+            "H" => Ok(Self::Hearts),
+            _ => Err(crate::DiceError::CardParsingError(format!(
+                "failed to parse suit: {s}"
+            ))),
         }
     }
 }
