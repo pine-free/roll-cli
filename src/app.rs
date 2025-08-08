@@ -10,10 +10,16 @@ pub struct App {
     args: CliArgs,
 }
 
-fn format_expr(expr: &ExprKind) -> Result<String> {
-    let res = match expr {
-        ExprKind::Simple(expr) => format!("{}: {}", expr, expr.clone().eval()?),
-        ExprKind::Labeled(l, expr) => format!("{l}: {}", expr.clone().eval()?),
+fn eval_expr(expression: &ExprKind) -> Result<ExprKind> {
+    let expr = expression.clone().eval()?;
+    debug!("Expression after evaluation: {:#?}", expr);
+    Ok(expr)
+}
+
+fn format_expr(expr_kind: &ExprKind) -> Result<String> {
+    let res = match expr_kind {
+        ExprKind::Simple(expr) => format!("{}: {}", expr, eval_expr(&expr_kind)?),
+        ExprKind::Labeled(l, expr) => format!("{l}: {}", eval_expr(&expr_kind)?),
         ExprKind::Separated(expr_kinds) => expr_kinds
             .iter()
             .map(|e| format_expr(e))

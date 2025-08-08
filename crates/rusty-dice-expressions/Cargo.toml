@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+log = "0.4.27"
 nom = "8.0.0"
 rusty-dice = { path = "../rusty-dice" }
 thiserror = "2.0.12"

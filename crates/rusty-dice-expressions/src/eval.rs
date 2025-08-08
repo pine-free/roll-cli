@@ -4,6 +4,7 @@ use crate::{
     ExpressionError,
     parse::{Atom, Expr, ExprKind, Operation, parse_expr, parse_expr_kind},
 };
+use log::debug;
 
 /// Trait for objects that support evaluation
 ///
@@ -34,12 +35,14 @@ impl Eval for Expr {
                 modifiers,
             }) => {
                 let mut roll = die.roll();
+                debug!("Roll results for {die}: {:#?}", roll);
 
                 let res = if let Some(mods) = modifiers {
                     for modif in mods.iter() {
                         roll = roll.and(modif);
                     }
 
+                    debug!("Roll results for {die} after modifiers: {:#?}", roll);
                     roll
                 } else {
                     roll
