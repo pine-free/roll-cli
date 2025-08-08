@@ -5,6 +5,7 @@ use crate::{
     parse::{Atom, Expr, ExprKind, Operation, parse_expr, parse_expr_kind},
 };
 use log::debug;
+use rusty_dice::{RollMapping, RollModifier};
 
 /// Trait for objects that support evaluation
 ///
@@ -39,7 +40,10 @@ impl Eval for Expr {
 
                 let res = if let Some(mods) = modifiers {
                     for modif in mods.iter() {
-                        roll = roll.and(modif);
+                        let modifier = modif.inner();
+                        roll = roll.apply::<dyn RollMapping<Output = Vec<u32>>, Vec<u32>>(
+                            modifier.as_ref(),
+                        );
                     }
 
                     debug!("Roll results for {die} after modifiers: {:#?}", roll);

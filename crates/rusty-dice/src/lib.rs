@@ -63,7 +63,7 @@ pub trait RollModifier {
     type Output;
 
     /// The method that modifies the results
-    fn apply(self, input: RollResults) -> Self::Output;
+    fn apply(&self, input: RollResults) -> Self::Output;
 }
 
 /// A common kind of RollModifier that one set of values
@@ -83,8 +83,8 @@ where
 }
 
 /// Keep n highest dice
-#[derive(Clone, Copy, Debug)]
-pub struct KeepHighest(usize);
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct KeepHighest(pub usize);
 
 impl std::fmt::Display for KeepHighest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -95,15 +95,15 @@ impl std::fmt::Display for KeepHighest {
 impl RollModifier for KeepHighest {
     type Output = RollResults;
 
-    fn apply(self, input: RollResults) -> Self::Output {
+    fn apply(&self, input: RollResults) -> Self::Output {
         let n_skip = input.len().saturating_sub(self.0);
         input.into_iter().skip(n_skip).collect()
     }
 }
 
 /// Drop n lowest dice
-#[derive(Clone, Copy, Debug)]
-pub struct DropLowest(usize);
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct DropLowest(pub usize);
 
 impl std::fmt::Display for DropLowest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -114,20 +114,20 @@ impl std::fmt::Display for DropLowest {
 impl RollModifier for DropLowest {
     type Output = RollResults;
 
-    fn apply(self, input: RollResults) -> Self::Output {
+    fn apply(&self, input: RollResults) -> Self::Output {
         let keep = KeepHighest(input.len() - self.0);
         keep.apply(input)
     }
 }
 
 /// Keep n lowest dice
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct KeepLowest(usize);
 
 impl RollModifier for KeepLowest {
     type Output = RollResults;
 
-    fn apply(self, input: RollResults) -> Self::Output {
+    fn apply(&self, input: RollResults) -> Self::Output {
         input.into_iter().take(self.0).collect()
     }
 }
@@ -139,7 +139,7 @@ impl std::fmt::Display for KeepLowest {
 }
 
 /// Drop n highest dice
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct DropHighest(usize);
 
 impl std::fmt::Display for DropHighest {
@@ -151,20 +151,49 @@ impl std::fmt::Display for DropHighest {
 impl RollModifier for DropHighest {
     type Output = RollResults;
 
-    fn apply(self, input: RollResults) -> Self::Output {
+    fn apply(&self, input: RollResults) -> Self::Output {
         let keep = KeepLowest(input.len() - self.0);
         keep.apply(input)
     }
 }
 
-impl<F> RollModifier for F
-where
-    F: FnOnce(RollResults) -> RollResults,
-{
-    type Output = Vec<u32>;
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// An enumeration of built-in roll modifiers
+pub enum RollModifiers {
+    /// See inner struct documentation
+    KeepLowest(KeepLowest),
 
-    fn apply(self, results: RollResults) -> RollResults {
-        self(results)
+    /// See inner struct documentation
+    KeepHighest(KeepHighest),
+
+    /// See inner struct documentation
+    DropLowest(DropLowest),
+
+    /// See inner struct documentation
+    DropHighest(DropHighest),
+}
+
+/// Modifier that can be displayed
+pub trait DisplayableModifier: RollMapping<Output = Vec<u32>> + std::fmt::Display {}
+
+impl<T> DisplayableModifier for T where T: RollMapping<Output = Vec<u32>> + std::fmt::Display {}
+
+impl RollModifiers {
+    /// Provides access to the inner roll modifier object
+    pub fn inner(&self) -> Box<dyn DisplayableModifier> {
+        match self {
+            RollModifiers::KeepLowest(i) => Box::new(i.clone()),
+            RollModifiers::KeepHighest(i) => Box::new(i.clone()),
+            RollModifiers::DropLowest(i) => Box::new(i.clone()),
+            RollModifiers::DropHighest(i) => Box::new(i.clone()),
+        }
+    }
+}
+
+impl std::fmt::Display for RollModifiers {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let repr = self.inner().to_string();
+        write!(f, "{}", repr)
     }
 }
 
@@ -215,6 +244,16 @@ impl DiceRoll {
         new_values.sort();
 
         Self { values: new_values }
+    }
+
+    /// Apply a modifier
+    pub fn apply<M, T>(self, modifier: &M) -> Self
+    where
+        M: RollMapping<Output = Vec<u32>> + ?Sized,
+    {
+        Self {
+            values: modifier.apply(self.values),
+        }
     }
 
     /// Keep the n highest dice

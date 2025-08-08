@@ -10,9 +10,11 @@ use nom::{
     multi::{many0, separated_list1},
     sequence::{preceded, separated_pair},
 };
-use rusty_dice::Dice;
+use rusty_dice::{Dice, DropLowest, KeepHighest, RollModifier, RollModifiers};
 
 type ParseRes<'a, T> = IResult<&'a str, T, Error<&'a str>>;
+
+trait RollModifierDisplayable: RollModifier + std::fmt::Display + std::fmt::Debug {}
 
 /// Mathematical operations supported by this crate
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -39,55 +41,6 @@ impl fmt::Display for Operation {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-/// Roll modifier representations
-pub enum RollModifier {
-    /// Keep n highest dice
-    KeepHighest(usize),
-
-    /// Keep n lowest dice
-    KeepLowest(usize),
-
-    /// Drop n highest dice
-    DropHighest(usize),
-
-    /// Drop n lowest dice
-    DropLowest(usize),
-}
-
-impl rusty_dice::RollModifier for RollModifier {
-    fn apply(self, results: Vec<u32>) -> Vec<u32> {
-        match self {
-            RollModifier::KeepHighest(n) => rusty_dice::DiceRoll::from(results).keep(n).into(),
-            RollModifier::DropLowest(n) => rusty_dice::DiceRoll::from(results).drop(n).into(),
-            RollModifier::KeepLowest(_) => todo!(),
-            RollModifier::DropHighest(_) => todo!(),
-        }
-    }
-
-    type Output = Vec<u32>;
-}
-
-impl rusty_dice::RollModifier for &RollModifier {
-    fn apply(self, results: Vec<u32>) -> Vec<u32> {
-        self.clone().apply(results)
-    }
-
-    type Output = Vec<u32>;
-}
-
-impl fmt::Display for RollModifier {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let repr = match self {
-            RollModifier::KeepHighest(n) => format!("k{n}"),
-            RollModifier::DropLowest(n) => format!("d{n}"),
-            RollModifier::KeepLowest(_) => todo!(),
-            RollModifier::DropHighest(_) => todo!(),
-        };
-        write!(f, "{}", repr)
-    }
-}
-
 /// Atoms of an expression
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Atom {
@@ -99,7 +52,7 @@ pub enum Atom {
         dice: Dice,
 
         /// Modifiers that may apply to the roll
-        modifiers: Option<Vec<RollModifier>>,
+        modifiers: Option<Vec<RollModifiers>>,
     },
 
     /// A number
@@ -299,18 +252,18 @@ fn parse_operation(i: &str) -> ParseRes<Atom> {
     ))
 }
 
-fn parse_dice_keep_highest(i: &str) -> ParseRes<RollModifier> {
+fn parse_dice_keep_highest(i: &str) -> ParseRes<KeepHighest> {
     map(
         preceded(alt((tag("kh"), tag("k"))), digit1),
-        |keep_n: &str| RollModifier::KeepHighest(keep_n.parse().unwrap()),
+        |keep_n: &str| KeepHighest(keep_n.parse().unwrap()),
     )
     .parse(i)
 }
 
-fn parse_dice_drop(i: &str) -> ParseRes<RollModifier> {
+fn parse_dice_drop(i: &str) -> ParseRes<DropLowest> {
     map(
         preceded(alt((tag("dl"), tag("d"))), digit1),
-        |keep_n: &str| RollModifier::DropLowest(keep_n.parse().unwrap()),
+        |keep_n: &str| DropLowest(keep_n.parse().unwrap()),
     )
     .parse(i)
 }
@@ -319,7 +272,10 @@ fn parse_dice(i: &str) -> ParseRes<Atom> {
     map(
         (
             recognize(separated_pair(digit1, tag("d"), digit1)),
-            many0(alt((parse_dice_keep_highest, parse_dice_drop))),
+            many0(alt((
+                map(parse_dice_keep_highest, RollModifiers::KeepHighest),
+                map(parse_dice_drop, RollModifiers::DropLowest),
+            ))),
         ),
         |(dice_str, mods)| Atom::Dice {
             dice: dice_str.parse::<Dice>().unwrap(),
@@ -446,7 +402,7 @@ mod tests {
             die,
             Atom::Dice {
                 dice: Dice::new(2, 6),
-                modifiers: Some(vec![RollModifier::KeepHighest(1)])
+                modifiers: Some(vec![RollModifiers::KeepHighest(KeepHighest(1))])
             }
         )
     }
@@ -461,7 +417,7 @@ mod tests {
             die1,
             Atom::Dice {
                 dice: Dice::new(2, 6),
-                modifiers: Some(vec![RollModifier::DropLowest(1)])
+                modifiers: Some(vec![RollModifiers::DropLowest(DropLowest(1))])
             },
             "the basic expression parsed wrong"
         );
