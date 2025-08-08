@@ -122,7 +122,7 @@ impl RollModifier for DropLowest {
 
 /// Keep n lowest dice
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct KeepLowest(usize);
+pub struct KeepLowest(pub usize);
 
 impl RollModifier for KeepLowest {
     type Output = RollResults;
@@ -140,7 +140,7 @@ impl std::fmt::Display for KeepLowest {
 
 /// Drop n highest dice
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct DropHighest(usize);
+pub struct DropHighest(pub usize);
 
 impl std::fmt::Display for DropHighest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
