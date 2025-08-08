@@ -43,17 +43,17 @@ impl fmt::Display for Operation {
 /// Roll modifier representations
 pub enum RollModifier {
     /// Keep modifier
-    Keep(usize),
+    KeepHighest(usize),
 
     /// Drop modifier
-    Drop(usize),
+    DropLowest(usize),
 }
 
 impl rusty_dice::RollModifier for RollModifier {
     fn apply(self, results: Vec<u32>) -> Vec<u32> {
         match self {
-            RollModifier::Keep(n) => rusty_dice::DiceRoll::from(results).keep(n).into(),
-            RollModifier::Drop(n) => rusty_dice::DiceRoll::from(results).drop(n).into(),
+            RollModifier::KeepHighest(n) => rusty_dice::DiceRoll::from(results).keep(n).into(),
+            RollModifier::DropLowest(n) => rusty_dice::DiceRoll::from(results).drop(n).into(),
         }
     }
 }
@@ -67,8 +67,8 @@ impl rusty_dice::RollModifier for &RollModifier {
 impl fmt::Display for RollModifier {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let repr = match self {
-            RollModifier::Keep(n) => format!("k{n}"),
-            RollModifier::Drop(n) => format!("d{n}"),
+            RollModifier::KeepHighest(n) => format!("k{n}"),
+            RollModifier::DropLowest(n) => format!("d{n}"),
         };
         write!(f, "{}", repr)
     }
@@ -287,14 +287,14 @@ fn parse_operation(i: &str) -> ParseRes<Atom> {
 
 fn parse_dice_keep(i: &str) -> ParseRes<RollModifier> {
     map(preceded(tag("k"), digit1), |keep_n: &str| {
-        RollModifier::Keep(keep_n.parse().unwrap())
+        RollModifier::KeepHighest(keep_n.parse().unwrap())
     })
     .parse(i)
 }
 
 fn parse_dice_drop(i: &str) -> ParseRes<RollModifier> {
     map(preceded(tag("d"), digit1), |keep_n: &str| {
-        RollModifier::Drop(keep_n.parse().unwrap())
+        RollModifier::DropLowest(keep_n.parse().unwrap())
     })
     .parse(i)
 }
@@ -430,7 +430,7 @@ mod tests {
             die,
             Atom::Dice {
                 dice: Dice::new(2, 6),
-                modifiers: Some(vec![RollModifier::Keep(1)])
+                modifiers: Some(vec![RollModifier::KeepHighest(1)])
             }
         )
     }
@@ -443,7 +443,7 @@ mod tests {
             die,
             Atom::Dice {
                 dice: Dice::new(2, 6),
-                modifiers: Some(vec![RollModifier::Drop(1)])
+                modifiers: Some(vec![RollModifier::DropLowest(1)])
             }
         )
     }
