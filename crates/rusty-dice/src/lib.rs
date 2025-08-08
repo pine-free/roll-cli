@@ -56,21 +56,27 @@ type RollResults = Vec<DiceVal>;
 ///
 /// This trait is implemented for closures, and you can
 /// define your own modifiers by implementing it
-pub trait RollModifier<T> {
+pub trait RollModifier {
     /// The output of the modifier
     ///
     /// Typically this is RollResults, but other variants are supported
     type Output;
 
     /// The method that modifies the results
-    fn apply(self, input: T) -> Self::Output;
+    fn apply(self, input: RollResults) -> Self::Output;
+}
+
+/// A common kind of RollModifier that one set of values
+/// of a roll to another one
+pub trait RollMapping: RollModifier {
+    fn apply(self, input: RollResults) -> RollResults;
 }
 
 /// Keep n highest dice
 #[derive(Clone, Copy, Debug)]
 pub struct KeepHighest(usize);
 
-impl RollModifier<RollResults> for KeepHighest {
+impl RollModifier for KeepHighest {
     type Output = RollResults;
 
     fn apply(self, input: RollResults) -> Self::Output {
@@ -83,7 +89,7 @@ impl RollModifier<RollResults> for KeepHighest {
 #[derive(Clone, Copy, Debug)]
 pub struct DropLowest(usize);
 
-impl RollModifier<RollResults> for DropLowest {
+impl RollModifier for DropLowest {
     type Output = RollResults;
 
     fn apply(self, input: RollResults) -> Self::Output {
@@ -92,7 +98,30 @@ impl RollModifier<RollResults> for DropLowest {
     }
 }
 
-impl<F> RollModifier<RollResults> for F
+#[derive(Clone, Copy, Debug)]
+pub struct KeepLowest(usize);
+
+impl RollModifier for KeepLowest {
+    type Output = RollResults;
+
+    fn apply(self, input: RollResults) -> Self::Output {
+        input.into_iter().take(self.0).collect()
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct DropHighest(usize);
+
+impl RollModifier for DropHighest {
+    type Output = RollResults;
+
+    fn apply(self, input: RollResults) -> Self::Output {
+        let keep = KeepLowest(input.len() - self.0);
+        keep.apply(input)
+    }
+}
+
+impl<F> RollModifier for F
 where
     F: FnOnce(RollResults) -> RollResults,
 {
