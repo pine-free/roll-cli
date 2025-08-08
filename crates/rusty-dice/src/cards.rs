@@ -31,18 +31,6 @@ impl Suit {
     }
 }
 
-impl From<Suit> for usize {
-    fn from(value: Suit) -> Self {
-        use Suit::*;
-        match value {
-            Spades => 0,
-            Diamonds => 1,
-            Clubs => 2,
-            Hearts => 3,
-        }
-    }
-}
-
 impl std::iter::Step for Suit {
     fn steps_between(start: &Self, end: &Self) -> (usize, Option<usize>) {
         let start = *start as usize;
