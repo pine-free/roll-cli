@@ -4,9 +4,8 @@ use rand::distr::{Distribution, StandardUniform};
 use rand::prelude::*;
 
 /// Card suit
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Suit {
-    /// Represents the spades suit
     Spades,
 
     /// Represents the diamonds suit
@@ -32,7 +31,7 @@ impl Display for Suit {
 }
 
 /// The type of card
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum CardType {
     /// Represents an ace
     Ace,
@@ -172,5 +171,11 @@ mod tests {
     fn string_repr() {
         let card = Card::new(CardType::Ace, Suit::Spades);
         assert_eq!(card.to_string(), "AS".to_string());
+    }
+
+    #[test]
+    fn test_range() {
+        let range = (CardType::Ace..=CardType::Queen).contains(&CardType::King);
+        assert!(!range);
     }
 }
