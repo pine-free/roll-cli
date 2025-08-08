@@ -79,6 +79,19 @@ impl RollModifier<RollResults> for KeepHighest {
     }
 }
 
+/// Drop n lowest dice
+#[derive(Clone, Copy, Debug)]
+pub struct DropLowest(usize);
+
+impl RollModifier<RollResults> for DropLowest {
+    type Output = RollResults;
+
+    fn apply(self, input: RollResults) -> Self::Output {
+        let keep = KeepHighest(input.len() - self.0);
+        keep.apply(input)
+    }
+}
+
 impl<F> RollModifier<RollResults> for F
 where
     F: FnOnce(RollResults) -> RollResults,
