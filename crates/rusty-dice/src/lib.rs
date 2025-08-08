@@ -86,6 +86,12 @@ where
 #[derive(Clone, Copy, Debug)]
 pub struct KeepHighest(usize);
 
+impl std::fmt::Display for KeepHighest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "kh{}", self.0)
+    }
+}
+
 impl RollModifier for KeepHighest {
     type Output = RollResults;
 
@@ -98,6 +104,12 @@ impl RollModifier for KeepHighest {
 /// Drop n lowest dice
 #[derive(Clone, Copy, Debug)]
 pub struct DropLowest(usize);
+
+impl std::fmt::Display for DropLowest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "dl{}", self.0)
+    }
+}
 
 impl RollModifier for DropLowest {
     type Output = RollResults;
@@ -120,9 +132,21 @@ impl RollModifier for KeepLowest {
     }
 }
 
+impl std::fmt::Display for KeepLowest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "kl{}", self.0)
+    }
+}
+
 /// Drop n highest dice
 #[derive(Clone, Copy, Debug)]
 pub struct DropHighest(usize);
+
+impl std::fmt::Display for DropHighest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "dh{}", self.0)
+    }
+}
 
 impl RollModifier for DropHighest {
     type Output = RollResults;
