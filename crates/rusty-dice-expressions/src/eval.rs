@@ -5,7 +5,7 @@ use crate::{
     parse::{Atom, Expr, ExprKind, Operation, parse_expr, parse_expr_kind},
 };
 use log::debug;
-use rusty_dice::modifiers::RollMapping;
+use rusty_dice::{cards::draw_n, modifiers::RollMapping};
 
 /// Trait for objects that support evaluation
 ///
@@ -71,6 +71,8 @@ impl Eval for Expr {
                     Operation::Sub => Ok(Expr::Constant(Atom::Number(l - r))),
                 }
             }
+
+            Expr::DrawCards(n) => Ok(Expr::Constant(Atom::CardList(draw_n(n)))),
             Expr::Constant(_) => Ok(self),
         }
     }

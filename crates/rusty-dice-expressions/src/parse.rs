@@ -10,7 +10,9 @@ use nom::{
     multi::{many0, separated_list1},
     sequence::{preceded, separated_pair},
 };
-use rusty_dice::{Dice, DropHighest, DropLowest, KeepHighest, KeepLowest, RollModifiers};
+use rusty_dice::{
+    Dice, DropHighest, DropLowest, KeepHighest, KeepLowest, RollModifiers, cards::Card,
+};
 
 type ParseRes<'a, T> = IResult<&'a str, T, Error<&'a str>>;
 
@@ -64,6 +66,9 @@ pub enum Atom {
     ///
     /// Example: "+"
     Operation(Operation),
+
+    /// A list of cards
+    CardList(Vec<Card>),
 }
 
 impl Atom {
@@ -110,6 +115,11 @@ impl fmt::Display for Atom {
             }
             Atom::Number(n) => n.to_string(),
             Atom::Operation(operation) => operation.to_string(),
+            Atom::CardList(cards) => cards
+                .iter()
+                .map(ToString::to_string)
+                .collect::<Vec<_>>()
+                .join(", "),
         };
         write!(f, "{inner}")
     }
@@ -158,6 +168,12 @@ pub enum Expr {
     /// The operands for the first addition are `5d6` and `1d4 + 5`,
     /// which is itself an Application expr
     Application(Operation, (Box<Expr>, Box<Expr>)),
+
+    /// A "Draw expression"
+    ///
+    /// A separate kind of expression that looks like "drawN"
+    /// where N is the number of cards you wish to draw from a shuffled deck
+    DrawCards(usize),
 }
 
 impl fmt::Display for Expr {
@@ -167,6 +183,7 @@ impl fmt::Display for Expr {
             Expr::Application(expr, (l, r)) => {
                 format!("{l} {expr} {r}")
             }
+            Expr::DrawCards(n) => format!("draw{n}"),
         };
         write!(f, "{repr}")
     }
