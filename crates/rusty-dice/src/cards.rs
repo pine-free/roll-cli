@@ -19,6 +19,37 @@ pub enum Suit {
     Hearts,
 }
 
+impl Suit {
+    fn from_usize(n: usize) -> Option<Self> {
+        match n {
+            0 => Some(Self::Spades),
+            1 => Some(Self::Diamonds),
+            2 => Some(Self::Clubs),
+            3 => Some(Self::Hearts),
+            _ => None,
+        }
+    }
+}
+
+impl std::iter::Step for Suit {
+    fn steps_between(start: &Self, end: &Self) -> (usize, Option<usize>) {
+        let n = (*end as usize).saturating_sub(*start as usize);
+        (n, Some(n))
+    }
+
+    fn forward_checked(start: Self, count: usize) -> Option<Self> {
+        Suit::from_usize(start as usize + count)
+    }
+
+    fn backward_checked(start: Self, count: usize) -> Option<Self> {
+        if (start as usize) < count {
+            return None;
+        }
+
+        Suit::from_usize(start as usize - count)
+    }
+}
+
 impl Display for Suit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let repr = match self {
@@ -175,8 +206,9 @@ mod tests {
     }
 
     #[test]
-    fn test_range() {
-        let range = (CardType::Ace..=CardType::Queen).contains(&CardType::King);
-        assert!(!range);
+    fn test_range_suit() {
+        use Suit::*;
+        let range = (Spades..=Hearts).collect::<Vec<_>>();
+        assert_eq!(range, vec![Spades, Diamonds, Clubs, Hearts]);
     }
 }
