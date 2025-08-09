@@ -3,7 +3,7 @@ use std::str::FromStr;
 use nom::{
     IResult, Parser,
     branch::alt,
-    bytes::complete::tag,
+    bytes::complete::{tag, take_until},
     character::complete::{digit1, one_of},
     combinator::{map, recognize},
     error::{Error, ParseError},
@@ -48,6 +48,8 @@ fn parse_card(i: &str) -> ParseRes<Card> {
     .parse(i)
 }
 
+simple_parser!(parse_description, take_until("\n"), String);
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -68,5 +70,12 @@ mod tests {
         parse_card,
         "AS",
         Card::new(CardType::Ace, Suit::Spades)
+    );
+
+    simple_test!(
+        test_parse_description,
+        parse_description,
+        "Lol kek\nThis is another string",
+        String::from("Lol kek")
     );
 }
