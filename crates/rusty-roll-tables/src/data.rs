@@ -4,7 +4,7 @@ pub(crate) trait Key: Eq + std::hash::Hash {}
 
 impl<T> Key for T where T: Eq + std::hash::Hash {}
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct RollTable<K, V>
 where
     K: Key,
@@ -13,6 +13,10 @@ where
 }
 
 impl<K: Key, V> RollTable<K, V> {
+    pub fn new(storage: HashMap<K, V>) -> Self {
+        Self { storage }
+    }
+
     pub(crate) fn inner_mut(&mut self) -> &mut HashMap<K, V> {
         &mut self.storage
     }
