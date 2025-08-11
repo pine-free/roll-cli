@@ -1,12 +1,13 @@
 use std::str::FromStr;
 
 use nom::{
-    IResult, Parser,
+    Finish, IResult, Parser,
     branch::alt,
     bytes::complete::{tag, take_until, take_until1},
-    character::complete::{digit1, one_of},
-    combinator::{map, recognize},
-    error::Error,
+    character::complete::{digit1, multispace0, newline, one_of, space0},
+    combinator::{map, recognize, rest},
+    error::{Error, ParseError},
+    multi::{many1, separated_list1},
     sequence::{delimited, preceded, separated_pair},
 };
 use rusty_dice::{
@@ -25,11 +26,13 @@ pub enum Atom {
 
 type ParseRes<'a, T> = IResult<&'a str, T, Error<&'a str>>;
 
+#[derive(PartialEq, Eq, Clone, Debug, Hash)]
 pub enum TableOutcome {
     Number(i32),
     Range(std::ops::RangeInclusive<i32>),
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TableRow {
     outcome: TableOutcome,
     description: String,
@@ -60,6 +63,13 @@ impl From<Vec<TableRow>> for RollTable<i32, String> {
 
         res
     }
+}
+
+pub fn ws<'a, O, E: ParseError<&'a str>, F>(inner: F) -> impl Parser<&'a str, Output = O, Error = E>
+where
+    F: Parser<&'a str, Output = O, Error = E>,
+{
+    delimited(space0, inner, space0)
 }
 
 fn parse_number(i: &str) -> ParseRes<i32> {
@@ -103,7 +113,7 @@ simple_parser!(
 
 simple_parser!(
     parse_table_header,
-    preceded(tag("# "), take_until1("(")),
+    preceded(ws(tag("# ")), ws(take_until1("("))),
     String
 );
 
@@ -111,6 +121,34 @@ fn parse_range(i: &str) -> ParseRes<std::ops::RangeInclusive<i32>> {
     map(
         separated_pair(parse_number, tag("-"), parse_number),
         |(first, second)| first..=second,
+    )
+    .parse(i)
+}
+
+fn parse_table_outcome(i: &str) -> ParseRes<TableOutcome> {
+    alt((
+        map(parse_range, TableOutcome::Range),
+        map(parse_number, TableOutcome::Number),
+    ))
+    .parse(i)
+}
+
+fn parse_table_row(i: &str) -> ParseRes<TableRow> {
+    map(
+        ws(separated_pair(
+            parse_table_outcome,
+            ws(tag(";")),
+            alt((take_until("\n"), rest)),
+        )),
+        |(outcome, desc)| TableRow::new(outcome, desc.to_string()),
+    )
+    .parse(i)
+}
+
+fn parse_table(i: &str) -> ParseRes<RollTable<i32, String>> {
+    map(
+        separated_list1(newline, parse_table_row),
+        Into::<RollTable<i32, String>>::into,
     )
     .parse(i)
 }
@@ -161,4 +199,30 @@ mod tests {
     );
 
     simple_test!(test_parse_range, parse_range, "12-20", 12..=20);
+
+    simple_test!(
+        test_parse_table_row,
+        parse_table_row,
+        "12-20  ; You get attacked by a duck\n",
+        TableRow::new(
+            TableOutcome::Range(12..=20),
+            String::from("You get attacked by a duck")
+        )
+    );
+
+    simple_test!(
+        test_parse_table,
+        parse_table,
+        "1-2;foo
+         3-4;bar",
+        RollTable::<i32, String>::new(
+            [
+                (1, "foo".into()),
+                (2, "foo".into()),
+                (3, "bar".into()),
+                (4, "bar".into())
+            ]
+            .into()
+        )
+    );
 }
