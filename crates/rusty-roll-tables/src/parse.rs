@@ -3,20 +3,18 @@ use std::str::FromStr;
 use nom::{
     IResult, Parser,
     branch::alt,
-    bytes::complete::{tag, take_until, take_until1, take_while},
-    character::{
-        complete::{alpha1, anychar, digit1, one_of},
-        multispace0,
-    },
-    combinator::{map, recognize, rest},
-    error::{Error, ParseError},
-    multi::many1,
+    bytes::complete::{tag, take_until, take_until1},
+    character::complete::{digit1, one_of},
+    combinator::{map, recognize},
+    error::Error,
     sequence::{delimited, preceded, separated_pair},
 };
 use rusty_dice::{
     Dice,
     cards::{Card, CardType, Suit},
 };
+
+use crate::RollTable;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Atom {
@@ -26,6 +24,43 @@ pub enum Atom {
 }
 
 type ParseRes<'a, T> = IResult<&'a str, T, Error<&'a str>>;
+
+pub enum TableOutcome {
+    Number(i32),
+    Range(std::ops::RangeInclusive<i32>),
+}
+
+pub struct TableRow {
+    outcome: TableOutcome,
+    description: String,
+}
+
+impl TableRow {
+    pub fn new(outcome: TableOutcome, description: String) -> Self {
+        Self {
+            outcome,
+            description,
+        }
+    }
+}
+
+impl From<Vec<TableRow>> for RollTable<i32, String> {
+    fn from(value: Vec<TableRow>) -> Self {
+        let mut res = RollTable::default();
+        for row in value.iter() {
+            match &row.outcome {
+                TableOutcome::Number(n) => {
+                    res.inner_mut().insert(*n, row.description.clone());
+                }
+                TableOutcome::Range(range_inclusive) => {
+                    res.insert_iter(range_inclusive.clone(), row.description.clone());
+                }
+            };
+        }
+
+        res
+    }
+}
 
 fn parse_number(i: &str) -> ParseRes<i32> {
     map(digit1, |num_str: &str| num_str.parse().unwrap()).parse(i)
