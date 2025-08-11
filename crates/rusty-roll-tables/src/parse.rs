@@ -3,12 +3,20 @@ use std::str::FromStr;
 use nom::{
     IResult, Parser,
     branch::alt,
-    bytes::complete::{tag, take_until},
-    character::complete::{digit1, one_of},
-    combinator::{map, recognize},
+    bytes::complete::{tag, take_until, take_until1, take_while},
+    character::{
+        complete::{alpha1, anychar, digit1, one_of},
+        multispace0,
+    },
+    combinator::{map, recognize, rest},
     error::{Error, ParseError},
+    multi::many1,
+    sequence::{delimited, preceded, separated_pair},
 };
-use rusty_dice::cards::{Card, CardType, Suit};
+use rusty_dice::{
+    Dice,
+    cards::{Card, CardType, Suit},
+};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Atom {
@@ -48,6 +56,30 @@ fn parse_card(i: &str) -> ParseRes<Card> {
     .parse(i)
 }
 
+simple_parser!(
+    parse_dice_type,
+    delimited(
+        tag("("),
+        recognize(separated_pair(digit1, tag("d"), digit1)),
+        tag(")")
+    ),
+    Dice
+);
+
+simple_parser!(
+    parse_table_header,
+    preceded(tag("# "), take_until1("(")),
+    String
+);
+
+fn parse_range(i: &str) -> ParseRes<std::ops::RangeInclusive<i32>> {
+    map(
+        separated_pair(parse_number, tag("-"), parse_number),
+        |(first, second)| first..=second,
+    )
+    .parse(i)
+}
+
 simple_parser!(parse_description, take_until("\n"), String);
 
 #[cfg(test)]
@@ -78,4 +110,20 @@ mod tests {
         "Lol kek\nThis is another string",
         String::from("Lol kek")
     );
+
+    simple_test!(
+        test_parse_dice_type,
+        parse_dice_type,
+        "(3d6)",
+        Dice::new(3, 6)
+    );
+
+    simple_test!(
+        test_parse_table_header,
+        parse_table_header,
+        "# this is a table lol (1d20)",
+        String::from("this is a table lol ")
+    );
+
+    simple_test!(test_parse_range, parse_range, "12-20", 12..=20);
 }
